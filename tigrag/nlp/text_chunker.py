@@ -185,14 +185,25 @@ class TextChunker():
             i += 1
 
         # 10. Make JSON-compatible
+        # 10. Make JSON-compatible and add keyword embeddings
         for chunk in chunks:
             chunk['chunk_idx'] = int(chunk['chunk_idx'])
             chunk['from_idx'] = int(chunk['from_idx'])
             chunk['to_idx'] = int(chunk['to_idx'])
-            # Get TF-IDF keywords for the chunk text (as list)
+
+            # Get TF-IDF keywords for the chunk text
             keyword_string = pre.run({'text': chunk['text']})
-            chunk['keywords'] = [kw.strip() for kw in keyword_string.split(',') if kw.strip()]
+            keywords = [kw.strip() for kw in keyword_string.split(',') if kw.strip()]
+            chunk['keywords'] = keywords
             chunk['text'] = str(chunk['text'])
+
+            # Create embedding for the keyword string
+            if keywords:
+                keyword_text = " ".join(keywords)
+                keyword_embedding = self.model(sentences=[keyword_text])[0]
+                chunk['keyword_embedding'] = keyword_embedding
+            else:
+                chunk['keyword_embedding'] = None
 
         return chunks
 
