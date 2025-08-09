@@ -13,7 +13,7 @@ from ..nlp.chunk_embedding_preprocessor import ChunkEmbeddingPreprocessor
 class TextChunker():
 
     def __init__(self, embedding_func: EmbeddingInvoker) -> None:
-        self.model = EmbeddingInvoker()
+        self.embedding_func = embedding_func
 
     def __combine_sentences(self, sentences, buffer_size=0):
             # Go through each sentence dict
@@ -94,7 +94,7 @@ class TextChunker():
         combined_sentences = [x['combined_sentence'] for x in sentences]
         pre = ChunkEmbeddingPreprocessor(method="tfidf", n_keywords=30, corpus=combined_sentences, identifier='text')
         reduced_sentences = [pre.run({'text': s}) for s in combined_sentences]
-        embeddings = self.model(sentences=reduced_sentences)
+        embeddings = self.embedding_func(sentences=reduced_sentences)
 
         for i, sentence in enumerate(sentences):
             sentence['combined_sentence_embedding'] = embeddings[i]
@@ -200,7 +200,7 @@ class TextChunker():
             # Create embedding for the keyword string
             if keywords:
                 keyword_text = " ".join(keywords)
-                keyword_embedding = self.model(sentences=[keyword_text])[0]
+                keyword_embedding = self.embedding_func(sentences=[keyword_text])[0]
                 chunk['keyword_embedding'] = keyword_embedding
             else:
                 chunk['keyword_embedding'] = None
