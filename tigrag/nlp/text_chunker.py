@@ -7,13 +7,17 @@ from nltk.corpus import stopwords
 from sklearn.metrics.pairwise import cosine_similarity
 from ..utils.embedding_invoker import EmbeddingInvoker
 from scipy.signal import argrelextrema
+from tqdm import tqdm
 import logging
 from ..nlp.chunk_embedding_preprocessor import ChunkEmbeddingPreprocessor
+from ..data_plotter.similarity_breakpoint_plotter import SimilarityBreakpointsPlotter
+
 
 class TextChunker():
 
-    def __init__(self, embedding_func: EmbeddingInvoker) -> None:
+    def __init__(self, embedding_func: EmbeddingInvoker, working_dir: str) -> None:
         self.embedding_func = embedding_func
+        self.working_dir = working_dir
 
     def __combine_sentences(self, sentences, buffer_size=0):
             # Go through each sentence dict
@@ -69,16 +73,17 @@ class TextChunker():
         return distances, sentences
 
     def chunk(self, text: str, breakpoint_percentile_threshold=95, min_length=400, align_to_paragraphs=True):
-        # 1. Find paragraph boundaries
+        logging.info("Step 1: Finding paragraph boundaries...")
         paragraph_starts = [m.end() for m in re.finditer(r'\n\s*\n', text)]
 
-        # 2. Extract sentences with start positions
+        logging.info("Step 2: Extracting sentences...")
         sentence_matches = list(re.finditer(r'([^.?!\n]+[.?!])', text))
         if len(sentence_matches) < 2:
+            logging.info("Less than 2 sentences found — returning empty list.")
             return []
 
         sentences_raw = []
-        for match in sentence_matches:
+        for idx, match in enumerate(sentence_matches, start=1):
             sentence = match.group().strip()
             if sentence:
                 sentences_raw.append({
@@ -86,28 +91,45 @@ class TextChunker():
                     'start': match.start()
                 })
 
-        # 3. Add index and combine with buffer
+        logging.info("Step 3: Combining sentences with buffer...")
         sentences = [{'sentence': s['sentence'], 'start': s['start'], 'index': i} for i, s in enumerate(sentences_raw)]
         sentences = self.__combine_sentences(sentences, buffer_size=2)
 
-        # 4. TF-IDF preprocessing before embedding
+        logging.info("Step 4: Running TF-IDF preprocessing before embedding...")
         combined_sentences = [x['combined_sentence'] for x in sentences]
         pre = ChunkEmbeddingPreprocessor(method="tfidf", n_keywords=30, corpus=combined_sentences, identifier='text')
-        reduced_sentences = [pre.run({'text': s}) for s in combined_sentences]
+
+        reduced_sentences = []
+        for s in tqdm(combined_sentences, desc="TF-IDF processing", unit="sent", leave=False):
+            reduced_sentences.append(pre.run({'text': s}))
+        logging.info("TF-IDF processing complete.")
+
+        logging.info("Creating embeddings for reduced sentences...")
         embeddings = self.embedding_func(sentences=reduced_sentences)
 
-        for i, sentence in enumerate(sentences):
-            sentence['combined_sentence_embedding'] = embeddings[i]
+        for i, sentence in enumerate(tqdm(sentences, desc="Creating embeddings", unit="sent"), start=1):
+            sentence['combined_sentence_embedding'] = embeddings[i - 1]
 
-        # 5. Compute cosine distances between sentence embeddings
+        logging.info("Step 5: Calculating cosine distances between embeddings...")
         distances, sentences = self.__calculate_cosine_distances(sentences)
 
-        # 6. Determine breakpoints based on distance threshold
+        logging.info("Step 6: Determining breakpoints...")
         breakpoint_distance_threshold = np.percentile(distances, breakpoint_percentile_threshold)
         raw_breakpoints = [i for i, x in enumerate(distances) if x > breakpoint_distance_threshold]
+        logging.info(f"  Found {len(raw_breakpoints)} raw breakpoints.")
 
-        # 7. Optionally align breakpoints to paragraphs
+        plotter = SimilarityBreakpointsPlotter(data_path=self.working_dir)  # oder ein anderer Pfad
+        raw_plot = plotter.plot_distances_with_breakpoints(
+            distances=distances,
+            breakpoints=raw_breakpoints,
+            threshold=breakpoint_distance_threshold,
+            title="Raw cosine distances & raw breakpoints",
+            filename="raw_distances_breakpoints.png",
+            show=False,
+        )
+
         if align_to_paragraphs:
+            logging.info("Step 7: Aligning breakpoints to paragraph boundaries...")
             paragraph_matches = list(re.finditer(r'\n\s*\n', text))
             paragraph_bounds = []
             last_pos = 0
@@ -143,7 +165,7 @@ class TextChunker():
         else:
             indices_above_thresh = raw_breakpoints
 
-        # 8. Build chunks
+        logging.info(f"Step 8: Building chunks from {len(indices_above_thresh)} breakpoints...")
         chunks = []
         start_index = 0
         global_chunk_idx = 0
@@ -160,6 +182,7 @@ class TextChunker():
             })
             global_chunk_idx = chunk_idx
             start_index = index + 1
+            logging.info(f"  Created chunk {chunk_idx + 1}/{len(indices_above_thresh) + 1}")
 
         if start_index < len(sentences):
             combined_text = ' '.join([d['sentence'] for d in sentences[start_index:]])
@@ -169,35 +192,33 @@ class TextChunker():
                 'to_idx': len(sentences),
                 'text': combined_text
             })
+            logging.info(f"  Created final chunk {global_chunk_idx + 2}")
 
-        # 9. Merge short chunks
+        logging.info("Step 9: Merging short chunks...")
         i = 0
         while i < len(chunks):
             if len(chunks[i]['text']) < min_length or (i < len(chunks) - 1 and len(chunks[i + 1]['text']) < min_length):
                 added_once = False
                 while i + 1 < len(chunks) and (
                         len(chunks[i]['text']) + len(chunks[i + 1]['text']) <= min_length or not added_once or len(
-                        chunks[i + 1]['text']) < min_length):
+                    chunks[i + 1]['text']) < min_length):
                     added_once = True
                     chunks[i]['text'] += ' ' + chunks[i + 1]['text']
                     chunks[i]['to_idx'] = chunks[i + 1]['to_idx']
                     del chunks[i + 1]
             i += 1
 
-        # 10. Make JSON-compatible
-        # 10. Make JSON-compatible and add keyword embeddings
-        for chunk in chunks:
+        logging.info("Step 10: Finalizing chunks and adding keyword embeddings...")
+        for idx, chunk in enumerate(chunks, start=1):
             chunk['chunk_idx'] = int(chunk['chunk_idx'])
             chunk['from_idx'] = int(chunk['from_idx'])
             chunk['to_idx'] = int(chunk['to_idx'])
 
-            # Get TF-IDF keywords for the chunk text
             keyword_string = pre.run({'text': chunk['text']})
             keywords = [kw.strip() for kw in keyword_string.split(',') if kw.strip()]
             chunk['keywords'] = keywords
             chunk['text'] = str(chunk['text'])
 
-            # Create embedding for the keyword string
             if keywords:
                 keyword_text = " ".join(keywords)
                 keyword_embedding = self.embedding_func(sentences=[keyword_text])[0]
@@ -205,6 +226,5 @@ class TextChunker():
             else:
                 chunk['keyword_embedding'] = None
 
+        logging.info(f"Chunking complete: {len(chunks)} chunks created.")
         return chunks
-
-

@@ -1,24 +1,34 @@
-
 from tigrag import TemporalInfluenceGraph, TigParam
+from tigrag.dataset_provider.ultradomain_dataset_provider import UltraDomainDatasetProvider
+import pandas as pd
+import logging
+
+# Logging-Grundkonfiguration einstellen
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] --> %(message)s",
+    datefmt="%H:%M:%S"
+)
 
 if __name__ == '__main__':
     params = TigParam(
         embedding_model_name="local",
-        llm_name="llama"
+        llm_name="llama",
+        working_dir="./data"
     )
 
     tig = TemporalInfluenceGraph(
-        working_dir="./data",
         query_param=params
     )
 
-    #tig.insert('Das ist ein langer Test!')
+    # load dataset
+    provider = UltraDomainDatasetProvider(save_dir="./data")
+    provider.load()
+    cooking_text = ' '.join(provider.get("cooking", column="context"))
+    print(len(cooking_text))
 
-    test_text = """
-    Life in a big city can be both exciting and overwhelming. With endless entertainment options, diverse cultures, and constant movement, there is always something happening. People from all walks of life come together, creating a unique blend of traditions, languages, and lifestyles.
+    # insert into tig
+    #tig.insert(cooking_text[:160000])
 
-However, city life also comes with its challenges. The fast pace can lead to stress and burnout, and the constant noise and crowds may leave little room for peace and quiet. Many people struggle to find balance between work, social life, and personal time in such a demanding environment.
-
-Despite the difficulties, many choose to stay because of the opportunities a big city offers. From career growth to educational institutions and networking possibilities, the benefits can outweigh the drawbacks for those who thrive in a dynamic setting.
-"""
-    tig.insert(test_text)
+    # retrieve relevant entries from tig
+    tig.retrieve('How do traditional cooking methods compare with modern approaches in the various texts?')

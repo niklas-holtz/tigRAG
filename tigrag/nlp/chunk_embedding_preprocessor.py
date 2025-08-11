@@ -6,6 +6,7 @@ os.environ["GIT_PYTHON_REFRESH"] = "quiet"
 
 import spacy
 import pytextrank
+import numpy as np
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
@@ -66,14 +67,32 @@ class ChunkEmbeddingPreprocessor:
         text = chunk.get(self._identifier, "")
         return self.method_dispatch[self.method](text, **self.method_kwargs)
 
+    def _topk_from_csr_row(self, csr_row, feature_names, k):
+        # csr_row ist 1xV CSR-Matrix
+        start, end = csr_row.indptr[0], csr_row.indptr[1]
+        idx = csr_row.indices[start:end]
+        val = csr_row.data[start:end]
+        if val.size == 0:
+            return []
+        k = min(k, val.size)
+        topk_local = np.argpartition(val, -k)[-k:]  # unsortiertes Top-k
+        order = np.argsort(-val[topk_local])  # absteigend sortieren
+        top = [feature_names[idx[i]] for i in topk_local[order] if val[i] > 0]
+        return top
+
     def _tfidf_keywords(self, text, corpus=None, n_keywords=15, reverse=True):
         if corpus is None:
             raise ValueError("TF-IDF preprocessing requires a full corpus.")
 
         if self._tfidf_matrix is None or self._vectorizer is None:
             processed_corpus = [self._preprocess(doc) for doc in corpus]
-
-            self._vectorizer = TfidfVectorizer()
+            self._vectorizer = TfidfVectorizer(
+                dtype=np.float32,  # halber Speicher, schneller
+                max_features=200_000,  # begrenzen, je nach Bedarf
+                min_df=2,  # Rauschen kappen
+                stop_words='english'        # ggf. passend zur Sprache setzen
+                # ngram_range=(1,2),           # nur wenn sinnvoll
+            )
             self._tfidf_matrix = self._vectorizer.fit_transform(processed_corpus)
             self._feature_names = self._vectorizer.get_feature_names_out()
 
@@ -85,21 +104,16 @@ class ChunkEmbeddingPreprocessor:
         index = self._text_index_map.get(processed_text)
 
         if index is not None:
-            row = self._tfidf_matrix[index].toarray()[0]
+            row = self._tfidf_matrix[index]  # 1xV CSR
         else:
-            tfidf_vector = self._vectorizer.transform([processed_text])
-            row = tfidf_vector.toarray()[0]
+            row = self._vectorizer.transform([processed_text])  # 1xV CSR
 
-        sorted_indices = row.argsort()[::-1]
-        top_indices = sorted_indices[:n_keywords]
-        keywords = [self._feature_names[i] for i in top_indices if row[i] > 0]
-
+        keywords = self._topk_from_csr_row(row, self._feature_names, n_keywords)
         if reverse:
             keywords = list(reversed(keywords))
 
         doc = _spacy_nlp(text)
         entities = [ent.text for ent in doc.ents]
-
         combined = list(dict.fromkeys(entities + keywords))
         return ", ".join(combined)
 

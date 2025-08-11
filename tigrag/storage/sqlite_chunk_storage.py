@@ -1,38 +1,94 @@
 import sqlite3
 import json
 import numpy as np
+import hashlib
+from typing import Optional, Dict, Any, List
 from .chunk_storage import ChunkStorage
+from datetime import datetime
 
 class SQLiteChunkStorage(ChunkStorage):
     def __init__(self, db_path: str):
         self.conn = sqlite3.connect(db_path)
         self.cursor = self.conn.cursor()
-        self._create_table()
+        self._create_tables()
 
-    def _create_table(self):
+    # --- schema ---
+    def _create_tables(self):
+        # documents table for full texts (deduplicated by sha256)
         self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chunks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                from_idx INTEGER,
-                to_idx INTEGER,
-                text TEXT UNIQUE,
-                keywords TEXT,
-                keyword_embedding BLOB
-            )
-        """)
+                            CREATE TABLE IF NOT EXISTS documents
+                            (
+                                id     INTEGER PRIMARY KEY AUTOINCREMENT,
+                                sha256 TEXT UNIQUE NOT NULL,
+                                text   TEXT        NOT NULL
+                            )
+                            """)
+        # chunks table (may already exist; create with new columns for fresh DBs)
+        self.cursor.execute("""
+                            CREATE TABLE IF NOT EXISTS chunks
+                            (
+                                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                                doc_id            INTEGER,
+                                from_idx          INTEGER,
+                                to_idx            INTEGER,
+                                text              TEXT UNIQUE,
+                                keywords          TEXT,
+                                keyword_embedding BLOB,
+                                FOREIGN KEY (doc_id) REFERENCES documents (id)
+                            )
+                            """)
+        # events table for extracted events
+        self.cursor.execute("""
+                            CREATE TABLE IF NOT EXISTS events
+                            (
+                                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                                query        TEXT NOT NULL,
+                                retrieved_at TEXT NOT NULL,
+                                events_json  TEXT NOT NULL
+                            )
+                            """)
         self.conn.commit()
 
-    def insert_chunk(self, from_idx: int, to_idx: int, text: str, keywords: list, embedding: list | None):
+    # --- documents API ---
+    def upsert_document(self, text: str) -> int:
+        digest = self._sha256(text)
+        self.cursor.execute("SELECT id FROM documents WHERE sha256 = ?", (digest,))
+        row = self.cursor.fetchone()
+        if row:
+            return int(row[0])
+        self.cursor.execute(
+            "INSERT INTO documents (sha256, text) VALUES (?, ?)",
+            (digest, text),
+        )
+        self.conn.commit()
+        return int(self.cursor.lastrowid)
+
+    def get_document_text(self, doc_id: int) -> Optional[str]:
+        self.cursor.execute("SELECT text FROM documents WHERE id = ?", (doc_id,))
+        row = self.cursor.fetchone()
+        return row[0] if row else None
+
+    # --- chunks API ---
+    def insert_chunk(
+        self,
+        from_idx: int,
+        to_idx: int,
+        text: str,
+        keywords: list,
+        embedding: list | None,
+        *,
+        doc_id: Optional[int] = None
+    ):
         if embedding is not None:
             embedding_blob = sqlite3.Binary(np.array(embedding, dtype=np.float32).tobytes())
         else:
             embedding_blob = None
-
         try:
             self.cursor.execute("""
-                INSERT INTO chunks (from_idx, to_idx, text, keywords, keyword_embedding)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO chunks (doc_id, from_idx, to_idx, text, keywords, keyword_embedding)
+                VALUES (?, ?, ?, ?, ?, ?)
             """, (
+                doc_id,
                 from_idx,
                 to_idx,
                 text,
@@ -41,8 +97,79 @@ class SQLiteChunkStorage(ChunkStorage):
             ))
             self.conn.commit()
         except sqlite3.IntegrityError:
-            # Skip duplicates
             pass
+
+    def get_all_chunks(self, limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
+        sql = """
+            SELECT id, doc_id, from_idx, to_idx, text, keywords, keyword_embedding
+            FROM chunks
+            ORDER BY id ASC
+        """
+        params: list = []
+        if limit is not None:
+            sql += " LIMIT ? OFFSET ?"
+            params.extend([int(limit), int(offset)])
+
+        self.cursor.execute(sql, params)
+        rows = self.cursor.fetchall()
+
+        out = []
+        for _id, doc_id, from_idx, to_idx, text, keywords_json, emb_blob in rows:
+            keywords = json.loads(keywords_json) if keywords_json else []
+            embedding = np.frombuffer(emb_blob, dtype=np.float32) if emb_blob else None
+            out.append({
+                "id": _id,
+                "doc_id": doc_id,
+                "from_idx": from_idx,
+                "to_idx": to_idx,
+                "text": text,
+                "keywords": keywords,
+                "embedding": embedding,
+            })
+        return out
+
+    def insert_events(self, query: str, events: List[Dict[str, Any]], retrieved_at: Optional[str] = None):
+        """
+        Speichert eine Liste von Events als JSON-String mit Query und Zeitstempel.
+        """
+        if retrieved_at is None:
+            retrieved_at = datetime.utcnow().isoformat()
+
+        events_json_str = json.dumps(events, ensure_ascii=False)
+        self.cursor.execute("""
+                            INSERT INTO events (query, retrieved_at, events_json)
+                            VALUES (?, ?, ?)
+                            """, (query, retrieved_at, events_json_str))
+        self.conn.commit()
+
+    def get_events(self, query: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Lädt Events aus der DB. Optional gefiltert nach Query.
+        """
+        if query:
+            self.cursor.execute("SELECT query, retrieved_at, events_json FROM events WHERE query = ?", (query,))
+        else:
+            self.cursor.execute("SELECT query, retrieved_at, events_json FROM events")
+        rows = self.cursor.fetchall()
+
+        result = []
+        for q, ts, events_json in rows:
+            try:
+                events_list = json.loads(events_json)
+            except json.JSONDecodeError:
+                events_list = []
+            result.append({
+                "query": q,
+                "retrieved_at": ts,
+                "events": events_list
+            })
+        return result
+
+    # --- helper ---
+    @staticmethod
+    def _sha256(text: str) -> str:
+        import hashlib
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
     def close(self):
         self.conn.close()

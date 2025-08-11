@@ -1,10 +1,27 @@
+import os
 import logging
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from datetime import datetime
 import torch
-import time
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+
 
 class LLMInvoker:
-    def __init__(self, model_path: str = r"meta-llama/Llama-3.2-3B-Instruct", load_in_4bit: bool = True):
+    def __init__(
+        self,
+        working_dir: str,
+        model_path: str = r"meta-llama/Llama-3.2-3B-Instruct",
+        load_in_4bit: bool = True
+    ):
+        self.working_dir = os.path.abspath(working_dir)
+        self.log_dir = os.path.join(self.working_dir, "llm_logs")
+        os.makedirs(self.log_dir, exist_ok=True)
+
+        # Log-Datei (einmalig erstellt, danach immer append)
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+        self.log_file = os.path.join(self.log_dir, f"llm_calls_{timestamp}.log")
+        with open(self.log_file, "w", encoding="utf-8") as f:
+            f.write(f"# LLM Call Log - Created {datetime.utcnow().isoformat()}\n\n")
+
         logging.info(f"loading model from: {model_path}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
@@ -26,14 +43,20 @@ class LLMInvoker:
             offload_folder="offload",  # Ordner für CPU/SSD-Teil
         )
 
-    def __call__(self, messages: list, max_new_tokens: int = 2000, temperature: float = 0.4, top_p: float = 0.9) -> str:
+    def __call__(
+        self,
+        messages: list,
+        max_new_tokens: int = 2000,
+        temperature: float = 0.4,
+        top_p: float = 0.9
+    ) -> str:
         """
         messages: list of dicts in the format:
         [
             {"role": "system", "content": "..."},
             {"role": "user", "content": "..."},
             {"role": "assistant", "content": "..."}
-            and so on ...
+            ...
         ]
         """
 
@@ -60,38 +83,21 @@ class LLMInvoker:
         # decode only new tokens (exclude prompt)
         new_tokens = generated_ids[0][inputs["input_ids"].shape[-1]:]
         answer = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
+        answer = answer.strip()
 
-        return answer.strip()
+        # Loggen des Calls
+        self._log_call(messages, answer)
 
+        return answer
 
-if __name__ == "__main__":
-    print(torch.cuda.is_available())  # -> True
-    invoker = LLMInvoker()
-
-    # Zeitmessung starten
-    t_start = time.perf_counter()
-
-    # simple dialogue
-    response1 = invoker([
-        {"role": "system",
-         "content": "you are a roland berger consultant bot, providing concise and insightful consulting advice."},
-        {"role": "user", "content": "what are the latest figures on the automotive market in europe?"}
-    ])
-    print("=== response 1 ===")
-    print(response1)
-    print()
-
-    # Zeitmessung stoppen
-    t_end = time.perf_counter()
-    elapsed = t_end - t_start
-    print(f"Antwortdauer: {elapsed:.2f} Sekunden")
-
-    # extended dilogue
-    response2 = invoker([
-        {"role": "system", "content": "you are a roland berger consultant bot, providing concise and insightful consulting advice."},
-        {"role": "user", "content": "what are the latest figures on the automotive market in europe?"},
-        {"role": "assistant", "content": "the european automotive market grew by 5% in q2 2025, driven by ev demand."},
-        {"role": "user", "content": "can you summarize the key drivers for that growth?"}
-    ])
-    logging.info("=== response 2 ===")
-    print(response2)
+    def _log_call(self, messages: list, answer: str) -> None:
+        """Hängt den Prompt und die Antwort an die Logdatei an."""
+        timestamp = datetime.utcnow().isoformat()
+        with open(self.log_file, "a", encoding="utf-8") as f:
+            f.write(f"## Call at {timestamp}\n")
+            f.write("Prompt:\n")
+            for m in messages:
+                f.write(f"[{m['role'].upper()}] {m['content']}\n")
+            f.write("\nAnswer:\n")
+            f.write(answer + "\n\n")
+            f.write("-" * 80 + "\n\n")

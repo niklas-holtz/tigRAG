@@ -11,3 +11,5 @@ class TigParam:
 
     llm_name: str
     """LLM function used to generate responses."""
+
+    working_dir: str
