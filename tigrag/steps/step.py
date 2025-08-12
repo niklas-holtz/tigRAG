@@ -15,6 +15,7 @@ class RetrieveContext:
     working_dir: str
     llm_invoker: LLMInvoker
     embedding_invoker: EmbeddingInvoker
+    llm_worker_nodes: int = 1
     event_row_id: int = None
     selected: List = field(default_factory=list)
     # Zwischenstände:

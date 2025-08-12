@@ -24,8 +24,16 @@ class TemporalInfluenceGraph:
             cache_dir=self.query_param.working_dir
         )
 
+        # Create llm function
+        self.llm_func = LLMInvoker(
+            self.query_param.llm_name, 
+            self.query_param.working_dir
+        )
+        # Load model
+        self.llm_func.init()
+
         # Init repository (can be swapped out later)
-        db_path = os.path.join(self.query_param.working_dir, "chunks.db")
+        db_path = os.path.join(self.query_param.working_dir, "tig.sqlite")
         self.chunk_stor = SQLiteChunkStorage(db_path)
 
     def insert(self, text: str):
@@ -51,14 +59,15 @@ class TemporalInfluenceGraph:
             query=query,
             chunk_storage=self.chunk_stor,
             working_dir=self.query_param.working_dir,
-            llm_invoker=LLMInvoker(self.query_param.working_dir),
+            llm_invoker=self.llm_func,
             embedding_invoker=self.embedding_func,
+            llm_worker_nodes=self.query_param.llm_worker_nodes
         )
 
         pipeline = [
-            #ChunkPreparationStep(),
-            #ChunkSelectionStep(),
-            #EventExtractorStep(),
+            ChunkPreparationStep(),
+            ChunkSelectionStep(),
+            EventExtractorStep(),
             EventRelationStep()
         ]
 

@@ -95,17 +95,20 @@ class TextChunker():
         sentences = [{'sentence': s['sentence'], 'start': s['start'], 'index': i} for i, s in enumerate(sentences_raw)]
         sentences = self.__combine_sentences(sentences, buffer_size=2)
 
-        logging.info("Step 4: Running TF-IDF preprocessing before embedding...")
+        logging.info("Step 4: Running preprocessing before embedding...")
         combined_sentences = [x['combined_sentence'] for x in sentences]
         pre = ChunkEmbeddingPreprocessor(method="tfidf", n_keywords=30, corpus=combined_sentences, identifier='text')
 
         reduced_sentences = []
-        for s in tqdm(combined_sentences, desc="TF-IDF processing", unit="sent", leave=False):
+        for s in tqdm(combined_sentences, desc="Sentence preprocessing", unit="sent", leave=False):
             reduced_sentences.append(pre.run({'text': s}))
-        logging.info("TF-IDF processing complete.")
+        logging.info("Preprocessing complete.")
+
+        min_chars = 3  # or whatever threshold makes sense
+        filtered_sentences = [s for s in reduced_sentences if len(s.strip()) >= min_chars]
 
         logging.info("Creating embeddings for reduced sentences...")
-        embeddings = self.embedding_func(sentences=reduced_sentences)
+        embeddings = self.embedding_func(sentences=filtered_sentences)
 
         for i, sentence in enumerate(tqdm(sentences, desc="Creating embeddings", unit="sent"), start=1):
             sentence['combined_sentence_embedding'] = embeddings[i - 1]

@@ -73,7 +73,10 @@ class EventRelationStep(Step):
         """Call LLM to determine the relation between two events."""
         prompt = self._build_relation_prompt(ev_a, ev_b)
         try:
-            relation_text = ctx.llm_invoker(messages=[{"role": "user", "content": prompt}], max_new_tokens=1500)
+            param = {
+                'max_new_tokens': 3000
+            }
+            relation_text = ctx.llm_invoker(message=[{"role": "user", "content": prompt}], parameters=param)
         except Exception as e:
             logging.error(f"LLM call failed for pair ({idx_a}, {idx_b}): {e}")
             relation_text = None
@@ -88,6 +91,8 @@ class EventRelationStep(Step):
 
     def run(self, ctx: RetrieveContext) -> RetrieveContext:
         logging.info("Starting EventRelationStep...")
+        
+        self.max_workers = getattr(ctx, "llm_worker_nodes", 1)
 
         events, row_id = self._load_events(ctx)
         if not events:
@@ -108,8 +113,6 @@ class EventRelationStep(Step):
         # Step 2: Select Top N pairs
         top_pairs = self._get_top_n_pairs(candidate_matrix, events, self.top_n)
         logging.info(f"Selected top {len(top_pairs)} event pairs for relation extraction.")
-
-        return ctx
 
         # Step 3: Process in parallel with LLM
         relations = []

@@ -56,6 +56,7 @@ class EventExtractorStep(Step):
             return ctx
 
         query_text = getattr(ctx, "query", None)
+        self.max_workers = getattr(ctx, "llm_worker_nodes", 1)
 
         # Prepare tasks for all chunks (nimm hier ggf. [:2] raus, falls du alles willst)
         tasks: List[Tuple[int, Dict[str, Any], str]] = []
@@ -119,7 +120,10 @@ class EventExtractorStep(Step):
 
         for attempt in range(1, self.max_retries + 2):
             try:
-                raw = ctx.llm_invoker(messages=[{"role": "user", "content": prompt}], max_new_tokens=4000)
+                param = {
+                    'max_new_tokens': 3000
+                }
+                raw = ctx.llm_invoker(message=[{"role": "user", "content": prompt}], parameters=param)
                 logging.info(
                     f'LLM response (chunk #{idx}, attempt {attempt}): {raw[:500]}{"..." if len(str(raw)) > 500 else ""}')
                 thoughts_text, json_text = self._split_thoughts_and_json(raw)

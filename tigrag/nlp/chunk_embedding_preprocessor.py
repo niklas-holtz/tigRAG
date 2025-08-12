@@ -17,6 +17,9 @@ from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from langdetect import detect
 import nltk
+from rake_nltk import Rake
+
+import yake
 
 # Ensure NLTK data is available
 for resource in ['punkt', 'stopwords']:
@@ -46,11 +49,14 @@ class ChunkEmbeddingPreprocessor:
             - n_phrases: int
         """
         self.method = method
+        self.method = 'rake'
         self.method_kwargs = method_kwargs
         self._identifier = method_kwargs.pop('identifier', 'text')
 
         self.method_dispatch = {
-            "tfidf": self._tfidf_keywords
+            "tfidf": self._tfidf_keywords,
+            "yake": self._yake_keywords,
+            "rake": self._rake_keywords 
         }
 
         if method not in self.method_dispatch:
@@ -116,6 +122,90 @@ class ChunkEmbeddingPreprocessor:
         entities = [ent.text for ent in doc.ents]
         combined = list(dict.fromkeys(entities + keywords))
         return ", ".join(combined)
+
+    # ---------------- RAKE ----------------
+    def _rake_keywords(
+        self,
+        text: str,
+        n_keywords: int = 15,
+        include_entities: bool = False,
+        language: str = 'english',
+        corpus=None
+    ) -> str:
+        """
+        Extrahiert Keywords/Keyphrases aus EINEM Dokument mit RAKE.
+        - Schnell, keine Korpora nötig.
+        - Liefert bevorzugt Mehrwort-Phrasen.
+        Params:
+            n_keywords: Anzahl Top-Phrasen/Wörter
+            include_entities: spaCy-Entities zusätzlich aufnehmen
+            language: 'english' | 'german' (auto, wenn None)
+        """
+        if not text:
+            return ""
+
+        # Sprache bestimmen (leichtgewichtig)
+        if language is None:
+            language = "german" if any(ch in text for ch in "äöüÄÖÜß") else "english"
+
+        # RAKE-Extractor (nutzt NLTK-Stopwörter; in deinem Setup bereits vorhanden)
+        r = Rake(language=language)
+        r.extract_keywords_from_text(text)
+        phrases = r.get_ranked_phrases()[:n_keywords]
+
+        if include_entities:
+            doc = _spacy_nlp(text)
+            entities = [ent.text for ent in doc.ents]
+            phrases = list(dict.fromkeys(entities + phrases))
+
+        return ", ".join(phrases)
+
+    # ---------------- YAKE ----------------
+
+    def _yake_keywords(
+        self,
+        text,
+        n_keywords=15,
+        ngram=1,
+        deduplication_threshold=0.9,
+        include_entities=True,
+        lan='en',
+        corpus=None
+    ):
+        """
+        Extrahiert Keywords aus EINEM Dokument mit YAKE (ohne Korpus).
+        """
+        if not text:
+            return ""
+
+        # Sprache bestimmen und für YAKE mappen
+        if lan is None:
+            lang = self._detect_language(text)  # 'english'/'german'
+            if lang == 'german':
+                lan = 'de'
+            else:
+                lan = 'en'  # Fallback
+
+        # YAKE-Extractor
+        kw_extractor = yake.KeywordExtractor(
+            lan=lan,
+            n=ngram,
+            top=n_keywords,
+            dedupLim=deduplication_threshold
+        )
+        kw_with_scores = kw_extractor.extract_keywords(text)
+        # YAKE gibt (phrase, score). Kleinere Scores = besser.
+        # Sicherheitshalber sortieren und nur Strings übernehmen:
+        kw_with_scores.sort(key=lambda x: x[1])
+        yake_keywords = [kw for kw, _ in kw_with_scores[:n_keywords]]
+
+        if include_entities:
+            doc = _spacy_nlp(text)
+            entities = [ent.text for ent in doc.ents]
+            combined = list(dict.fromkeys(entities + yake_keywords))
+            return ", ".join(combined)
+        else:
+            return ", ".join(dict.fromkeys(yake_keywords))
 
     def _detect_language(self, text):
         try:

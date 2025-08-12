@@ -11,11 +11,20 @@ logging.basicConfig(
 )
 
 if __name__ == '__main__':
-    params = TigParam(
+    local_params = TigParam(
         embedding_model_name="local",
         llm_name="llama",
         working_dir="./data"
     )
+
+    aws_params = TigParam(
+        embedding_model_name="titan",
+        llm_name="claude3_7_bedrock",
+        working_dir="./data",
+        llm_worker_nodes=10
+    )
+
+    params = aws_params
 
     tig = TemporalInfluenceGraph(
         query_param=params
@@ -26,9 +35,10 @@ if __name__ == '__main__':
     provider.load()
     cooking_text = ' '.join(provider.get("cooking", column="context"))
     print(len(cooking_text))
-
+    text = cooking_text[:7000000]
+    #text = cooking_text
     # insert into tig
-    #tig.insert(cooking_text[:160000])
+    tig.insert(text)
 
     # retrieve relevant entries from tig
     tig.retrieve('How do traditional cooking methods compare with modern approaches in the various texts?')

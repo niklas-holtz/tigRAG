@@ -13,3 +13,4 @@ class TigParam:
     """LLM function used to generate responses."""
 
     working_dir: str
+    llm_worker_nodes: str = 1

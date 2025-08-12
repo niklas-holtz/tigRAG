@@ -5,9 +5,19 @@ import hashlib
 import re
 import string
 import unicodedata
+from typing import Any, Dict, List, Optional, Tuple, Callable
+from tqdm import tqdm
 import nltk
 from nltk.corpus import stopwords
 from sentence_transformers import SentenceTransformer
+import json, time, random
+import boto3
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from botocore.exceptions import ClientError
+from math import exp
+
+# Bedrock
+import boto3
 
 # Ensure NLTK stopwords are available
 try:
@@ -31,51 +41,71 @@ class EmbeddingPreprocessor:
 
     def clean(self, text: str) -> str:
         text = unicodedata.normalize("NFKD", text).lower()
-        text = PUNCTUATION_REGEX.sub('', text)
-        text = NUM_WS_REGEX.sub(' ', text).strip()
-        return ' '.join(w for w in text.split() if w not in self.stop_words)
+        text = PUNCTUATION_REGEX.sub("", text)
+        text = NUM_WS_REGEX.sub(" ", text).strip()
+        return " ".join(w for w in text.split() if w not in self.stop_words)
 
 
 class EmbeddingInvoker:
-    _loaded_models = {}
+    """
+    Embedding invoker with a registry mapping: model_name -> (init_fn, call_fn)
+    - 'local' uses SentenceTransformer 'paraphrase-MiniLM-L6-v2'
+    - 'titan' uses Amazon Bedrock Titan Embeddings (amazon.titan-embed-text-v2:0)
+    """
 
-    def __init__(self, model_name="local", cache_dir: str = "."):
-        self.models = {
-            "local": (self._embed_with_paraphrase, self._init_paraphase_model)
+    _loaded_models: Dict[str, Any] = {}
+
+    def __init__(self, model_name: str = "local", cache_dir: str = "."):
+        # Registry
+        self.models: Dict[str, Tuple[Callable[..., None], Callable[..., Any]]] = {
+            "local": (self.init_paraphrase_model, self.call_paraphrase),
+            "titan": (self.init_titan_model, self.call_titan_model),
         }
 
         if model_name not in self.models:
-            raise ValueError(f"Model '{model_name}' not found")
+            raise ValueError(f"Model '{model_name}' not found. Available: {list(self.models.keys())}")
 
         self.model_name = model_name
-        self.model_method, self.init_method = self.models[model_name]
+        self.init_fn, self.call_fn = self.models[model_name]
+
         self.preprocessor = EmbeddingPreprocessor()
         self.cache_path = os.path.join(cache_dir, f"embedding_cache_{model_name.replace('/', '_')}.pkl")
         self.cache = self._load_cache()
 
-        if self.init_method:
-            self.init_method()
+        # Initialize selected model (no-op for Titan/Bedrock)
+        self.init_fn()
 
+    # ---------------------------
+    # Public API
+    # ---------------------------
     def __call__(self, *args, **kwargs):
-        sentences = kwargs.get("sentences")
+        # get and remove 'sentences' from kwargs to avoid duplication
+        sentences = kwargs.pop("sentences", None)
         if not sentences:
             raise ValueError('Missing argument "sentences".')
 
+        # preprocess
         if isinstance(sentences, list):
-            sentences = [self.preprocessor.clean(s) for s in sentences]
+            cleaned = [self.preprocessor.clean(s) for s in sentences]
         else:
-            sentences = self.preprocessor.clean(sentences)
+            cleaned = self.preprocessor.clean(sentences)
 
-        cache_key = self._generate_cache_key(sentences)
+        # cache
+        cache_key = self._generate_cache_key(cleaned)
         if cache_key in self.cache:
             return self.cache[cache_key]
 
-        kwargs["sentences"] = sentences
-        embedding = self.model_method(*args, **kwargs)
-        self.cache[cache_key] = embedding
-        self._save_cache()
-        return embedding
+        # forward WITHOUT the original 'sentences' in kwargs
+        result = self.call_fn(sentences=cleaned, **kwargs)
 
+        self.cache[cache_key] = result
+        self._save_cache()
+        return result
+
+
+    # ---------------------------
+    # Cache helpers
+    # ---------------------------
     def _generate_cache_key(self, sentences):
         if isinstance(sentences, list):
             text = "|||".join(sentences)
@@ -99,25 +129,118 @@ class EmbeddingInvoker:
                 logging.warning(f"Error loading embedding cache: {e}")
         return {}
 
-    def _init_paraphase_model(self):
-        if 'paraphrase' not in EmbeddingInvoker._loaded_models:
-            model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-            EmbeddingInvoker._loaded_models['paraphrase'] = model
-        self.model = EmbeddingInvoker._loaded_models['paraphrase']
+    # ---------------------------
+    # Local paraphrase (SentenceTransformers)
+    # ---------------------------
+    def init_paraphrase_model(self):
+        if "paraphrase" not in EmbeddingInvoker._loaded_models:
+            model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+            EmbeddingInvoker._loaded_models["paraphrase"] = model
+        self.model = EmbeddingInvoker._loaded_models["paraphrase"]
 
-    def _embed_with_paraphrase(self, *args, **kwargs):
-        # Überprüfe, ob 'sentences' im kwargs enthalten ist
-        if 'sentences' not in kwargs:
-            raise Exception('Missing argument "sentences".')
+    def call_paraphrase(self, *_, sentences, **__):
+        """
+        Returns:
+          - single string input -> vector: List[float]
+          - list input          -> List[List[float]]
+        """
+        # SentenceTransformer.encode accepts str or List[str]
+        emb = self.model.encode(sentences, convert_to_tensor=True, show_progress_bar=True)
+        return emb.tolist()
 
-        # Extrahiere die Sätze
-        sentences = kwargs['sentences']
+    # ---------------------------
+    # Bedrock Titan
+    # ---------------------------
+    def init_titan_model(self):
+        # No local initialization required for Bedrock
+        return
 
-        # Baue die Embeddings mit dem 'paraphrase-MiniLM-L6-v2' Modell
-        # logging.info('Building embedding with "paraphrase-MiniLM-L6-v2" model ..')
+    def call_titan_model(
+        self,
+        *,
+        sentences,
+        region: str = "eu-west-1",
+        model_id: str = "amazon.titan-embed-text-v2:0",
+        dimensions: int = 1024,      # valid: 256, 512, 1024
+        normalize: bool = True,
+        max_chars: int = 50000,
+        max_workers: int = 20,
+        max_retries: int = 5, 
+        **__
+    ):
+        """
+        Create embeddings with Amazon Titan Embeddings v2 on Bedrock.
 
-        # Berechne die Embeddings
-        embedding = self.model.encode(sentences, convert_to_tensor=True, show_progress_bar=False)
+        Args:
+        sentences: str or List[str] (already preprocessed upstream)
+        region: AWS region for Bedrock Runtime
+        model_id: Titan model id
+        dimensions: output vector size (256, 512, 1024)
+        normalize: whether to L2-normalize on the server
+        max_chars: truncate overly long inputs to avoid validation errors
 
-        # Statt NumPy-Array geben wir den Tensor zurück oder eine Python-Liste
-        return embedding.tolist()  # Konvertiere den Tensor in eine Python-Liste
+        Returns:
+        - str input  -> List[float]
+        - list input -> List[List[float]]
+        """
+
+        if dimensions not in (256, 512, 1024):
+            raise ValueError("Titan v2 unterstützt 256, 512 oder 1024 Dimensionen.")
+
+        client = boto3.client("bedrock-runtime", region_name=region)
+
+        def _zero_vec() -> list:
+            return [0.0] * dimensions
+
+        def _embed_one(text: str) -> list:
+            if not text:
+                return _zero_vec()
+
+            payload = {
+                "inputText": text[:max_chars],
+                "dimensions": dimensions,
+                "normalize": normalize,
+            }
+
+            # Retries mit expon. Backoff + Jitter
+            delay = 0.5
+            for attempt in range(1, max_retries + 1):
+                try:
+                    resp = client.invoke_model(
+                        modelId=model_id,
+                        body=json.dumps(payload),
+                        accept="application/json",
+                        contentType="application/json",
+                    )
+                    data = json.loads(resp["body"].read())
+                    return data["embedding"]
+                except ClientError as e:
+                    code = e.response.get("Error", {}).get("Code", "")
+                    # typische, temporäre Fehler
+                    transient = {
+                        "ThrottlingException",
+                        "TooManyRequestsException",
+                        "ServiceQuotaExceededException",
+                        "LimitExceededException",
+                        "RequestTimeout",
+                        "InternalServerException",
+                    }
+                    if code in transient and attempt < max_retries:
+                        time.sleep(delay + random.random() * 0.25)
+                        delay = min(8.0, delay * 2.0)  # Deckelung
+                        continue
+                    raise
+            return _zero_vec()
+
+        # Einzeltext
+        if not isinstance(sentences, list):
+            return _embed_one(sentences)
+
+        # Liste -> parallel, Reihenfolge bewahren
+        results = [None] * len(sentences)
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            futures = {ex.submit(_embed_one, s): i for i, s in enumerate(sentences)}
+            for fut in tqdm(as_completed(futures), total=len(sentences), desc="Creating Titan embeddings", unit="sent"):
+                i = futures[fut]
+                results[i] = fut.result()
+        return results
