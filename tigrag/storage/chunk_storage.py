@@ -36,7 +36,7 @@ class ChunkStorage(ABC):
 
     # --- events API ---
     @abstractmethod
-    def insert_events(self, query: str, events: List[Dict[str, Any]], retrieved_at: Optional[str] = None) -> None:
+    def insert_events(self, query: str, events: List[Dict[str, Any]], retrieved_at: Optional[str] = None) -> int:
         """
         Store a list of event objects (as JSON) associated with a query and a retrieval timestamp.
         Implementations should serialize `events` to JSON internally.
@@ -44,15 +44,25 @@ class ChunkStorage(ABC):
         pass
 
     @abstractmethod
-    def get_events(self, query: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_events(self, query: Optional[str] = None) -> tuple[Optional[int], List[Dict[str, Any]]]:
         """
-        Retrieve stored events. If `query` is provided, filter by that query.
-        Return format suggestion (per row/item):
-            {
-              "query": str,
-              "retrieved_at": str,   # ISO-8601
-              "events": List[Dict[str, Any]]
-            }
+        Retrieve the most recent stored events entry.
+
+        If `query` is provided, only return the latest entry matching that query.
+        If no matching entry exists, return (None, []).
+
+        Returns:
+            tuple:
+                id (Optional[int]): The database ID of the retrieved row.
+                events (List[Dict[str, Any]]): The list of event objects from `events_json`.
+        """
+        pass
+
+    @abstractmethod
+    def insert_relations(self, event_id: int, relations: List[Dict[str, Any]]):
+        """
+        Update the relations_json field for a specific events table row.
+        Implementations should serialize `relations` to JSON internally.
         """
         pass
 

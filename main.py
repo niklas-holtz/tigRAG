@@ -22,7 +22,7 @@ if __name__ == '__main__':
     )
 
     # load dataset
-    provider = UltraDomainDatasetProvider(save_dir="./data")
+    provider = UltraDomainDatasetProvider(save_dir=params.working_dir)
     provider.load()
     cooking_text = ' '.join(provider.get("cooking", column="context"))
     print(len(cooking_text))

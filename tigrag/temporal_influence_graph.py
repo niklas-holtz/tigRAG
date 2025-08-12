@@ -11,6 +11,7 @@ from .steps.step import RetrieveContext
 from .steps.chunk_preparation_step import ChunkPreparationStep
 from .steps.chunk_selection_step import ChunkSelectionStep
 from .steps.event_extractor_step import EventExtractorStep
+from .steps.event_relation_step import EventRelationStep
 
 class TemporalInfluenceGraph:
     def __init__(self, query_param: TigParam):
@@ -50,13 +51,15 @@ class TemporalInfluenceGraph:
             query=query,
             chunk_storage=self.chunk_stor,
             working_dir=self.query_param.working_dir,
-            llm_invoker=LLMInvoker(self.query_param.working_dir)
+            llm_invoker=LLMInvoker(self.query_param.working_dir),
+            embedding_invoker=self.embedding_func,
         )
 
         pipeline = [
-            ChunkPreparationStep(),
-            ChunkSelectionStep(),
-            EventExtractorStep()
+            #ChunkPreparationStep(),
+            #ChunkSelectionStep(),
+            #EventExtractorStep(),
+            EventRelationStep()
         ]
 
         for step in pipeline:

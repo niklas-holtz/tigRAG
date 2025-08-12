@@ -12,11 +12,21 @@ from datetime import datetime
 
 class EventExtractorStep(Step):
     """
-    Extracts structured events from selected chunks using an LLM prompt in parallel.
-    - Iterates over ctx.selected (list of chunks)
-    - For each chunk, builds a prompt and calls the provided LLM
-    - Parses the response as JSON (robustly)
-    - Stores a list of event dicts into ctx.events
+    Extracts structured events (array of event objects) from selected chunks using an LLM in parallel.
+    The LLM is expected to return a strict JSON array:
+    [
+      {
+        "title": "...",
+        "clues": ["...", "..."],
+        "associated_numbers": [ { "value": "...", "explanation": "..." } ],
+        "actors": ["...", "..."],
+        "locations": ["US", "EU"],
+        "summary": "...",
+        "influence": ["...", "..."],
+        "confidence": 0.0
+      }
+    ]
+    If no relevant event: []
     """
 
     def __init__(
@@ -47,13 +57,13 @@ class EventExtractorStep(Step):
 
         query_text = getattr(ctx, "query", None)
 
-        # Prepare tasks for all chunks
+        # Prepare tasks for all chunks (nimm hier ggf. [:2] raus, falls du alles willst)
         tasks: List[Tuple[int, Dict[str, Any], str]] = []
-        for i, chunk in enumerate(ctx.selected[:2], start=1):
+        for i, chunk in enumerate(ctx.selected, start=1):
             prompt = self._build_prompt(chunk.get("text", "") or "", query_text)
             tasks.append((i, chunk, prompt))
 
-        events: List[Dict[str, Any]] = []
+        all_events: List[Dict[str, Any]] = []
 
         # Process in parallel
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -70,74 +80,85 @@ class EventExtractorStep(Step):
             ):
                 idx, chunk = futures[future]
                 try:
-                    parsed_event = future.result()
+                    events_for_chunk = future.result()  # List[Dict]
                 except Exception as e:
                     logging.error(f"Error extracting event for chunk #{idx}: {e}")
-                    parsed_event = {
-                        "event_type": None,
-                        "entities": [],
-                        "time": None,
-                        "location": None,
-                        "summary": None,
-                        "confidence": 0.0,
-                        "_error": str(e),
-                    }
-                    self._attach_metadata(parsed_event, chunk)
-                events.append(parsed_event)
+                    events_for_chunk = []
 
-        ctx.events = events
+                # attach metadata per event + collect
+                for ev in events_for_chunk:
+                    self._attach_metadata(ev, chunk)
+                all_events.extend(events_for_chunk)
 
+        ctx.events = all_events
+
+        # Persist to DB
         try:
             if hasattr(ctx, "chunk_storage") and ctx.chunk_storage is not None:
                 retrieved_at = datetime.utcnow().isoformat()
-                ctx.chunk_storage.insert_events(
+                inserted_row_id = ctx.chunk_storage.insert_events(
                     query=query_text or "",
-                    events=events,
+                    events=all_events,
                     retrieved_at=retrieved_at
                 )
-                logging.info(f"Saved {len(events)} events for query '{query_text}' into database.")
+                ctx.event_row_id = inserted_row_id
+                logging.info(f"Saved {len(all_events)} events for query '{query_text}' into database.")
             else:
                 logging.warning("No chunk_storage found in context — events not persisted.")
         except Exception as e:
             logging.error(f"Failed to save events to database: {e}")
 
-        logging.info(f"EventExtractorStep finished. Extracted {len(events)} event(s).")
+        logging.info(f"EventExtractorStep finished. Extracted {len(all_events)} event(s).")
         return ctx
 
-    # ------------------------ helpers ------------------------
-
-    def _process_chunk(self, idx: int, chunk: Dict[str, Any], prompt: str, ctx: RetrieveContext) -> Dict[str, Any]:
-        """Runs the LLM for one chunk, retries on parse errors, returns parsed event dict."""
+    def _process_chunk(self, idx: int, chunk: Dict[str, Any], prompt: str, ctx: RetrieveContext) -> List[
+        Dict[str, Any]]:
         raw = None
-        parsed: Optional[Dict[str, Any]] = None
+        events_list: Optional[List[Dict[str, Any]]] = None
+        thoughts_text: Optional[str] = None
 
         for attempt in range(1, self.max_retries + 2):
             try:
                 raw = ctx.llm_invoker(messages=[{"role": "user", "content": prompt}], max_new_tokens=4000)
-                logging.info(f'LLM response: {raw}')
-                parsed = self._parse_first_json_object(raw)
-                if parsed is not None:
+                logging.info(
+                    f'LLM response (chunk #{idx}, attempt {attempt}): {raw[:500]}{"..." if len(str(raw)) > 500 else ""}')
+                thoughts_text, json_text = self._split_thoughts_and_json(raw)
+
+                # Handle 'None'
+                if json_text is not None and json_text.strip().lower() == "none":
+                    events_list = []
                     break
+
+                # Parse array (or object with "events" already normalized by splitter)
+                if json_text:
+                    try:
+                        obj = json.loads(json_text)
+                        if isinstance(obj, list):
+                            events_list = obj
+                            break
+                        if isinstance(obj, dict) and "events" in obj and isinstance(obj["events"], list):
+                            events_list = obj["events"]
+                            break
+                    except Exception as e:
+                        logging.warning(f"JSON parse failed for chunk #{idx} (attempt {attempt}): {e}")
             except Exception as e:
                 logging.warning(f"LLM call failed for chunk #{idx} (attempt {attempt}): {e}")
 
-        if parsed is None:
-            logging.warning(f"Could not parse JSON for chunk #{idx}.")
-            parsed = {
-                "event_type": None,
-                "entities": [],
-                "time": None,
-                "location": None,
-                "summary": None,
-                "confidence": 0.0,
-                "_raw": raw,
-            }
+        if not isinstance(events_list, list):
+            logging.warning(f"Could not parse JSON array for chunk #{idx}. Returning empty list.")
+            events_list = []
 
-        self._attach_metadata(parsed, chunk)
-        return parsed
+        # Optional: Thoughts als Debug-Meta an JEDEM Event anhängen (oder separat sammeln)
+        clean: List[Dict[str, Any]] = []
+        for ev in events_list:
+            if isinstance(ev, dict):
+                if thoughts_text:
+                    ev["_thoughts"] = thoughts_text  # optional; zum Debuggen
+                clean.append(ev)
+        return clean
 
     def _attach_metadata(self, event: Dict[str, Any], chunk: Dict[str, Any]) -> None:
-        """Attach source metadata to the parsed event."""
+        """Attach source metadata to a single event object."""
         event["_chunk_id"] = chunk.get("id")
         event["_cluster_id"] = chunk.get("cluster_id")
         event["_source_from_idx"] = chunk.get("from_idx")
@@ -152,29 +173,110 @@ class EventExtractorStep(Step):
         )
 
     @staticmethod
-    def _parse_first_json_object(text: Optional[str]) -> Optional[Dict[str, Any]]:
-        if not text:
+    def _parse_first_json_array_or_events(text: Optional[str]) -> Optional[List[Dict[str, Any]]]:
+        """
+        Try to parse:
+        - a JSON array directly: [ {...}, {...} ]
+        - or an object with key "events": { "events": [ ... ] }
+        - or the literal 'None' -> []
+        Robustly extracts the first [...] block if needed.
+        """
+        if text is None:
             return None
+
+        s = text.strip()
+        if s.lower() == "none":
+            return []
+        # direct parse
         try:
-            obj = json.loads(text)
-            if isinstance(obj, dict):
+            obj = json.loads(s)
+            if isinstance(obj, list):
                 return obj
+            if isinstance(obj, dict) and "events" in obj and isinstance(obj["events"], list):
+                return obj["events"]
         except Exception:
             pass
-        start_positions = [m.start() for m in re.finditer(r"\{", text)]
+
+        # find first [...] bracketed array
+        start_positions = [m.start() for m in re.finditer(r"\[", s)]
         for start in start_positions:
             depth = 0
-            for end in range(start, len(text)):
-                if text[end] == "{":
+            for end in range(start, len(s)):
+                if s[end] == "[":
                     depth += 1
-                elif text[end] == "}":
+                elif s[end] == "]":
                     depth -= 1
                     if depth == 0:
-                        candidate = text[start : end + 1]
+                        candidate = s[start : end + 1]
                         try:
-                            obj = json.loads(candidate)
-                            if isinstance(obj, dict):
-                                return obj
+                            arr = json.loads(candidate)
+                            if isinstance(arr, list):
+                                return arr
                         except Exception:
-                            break
+                            break  # try next start
         return None
+
+    def _split_thoughts_and_json(self, text: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+        """
+        Returns (thoughts_text, json_text). If no explicit sections are found,
+        tries to heuristically find the first JSON array.
+        """
+        if not text:
+            return None, None
+
+        s = text.strip()
+        # Hard rule: literal None -> no events
+        if s.lower() == "none":
+            return s, "[]"
+
+        # Look for explicit markers
+        # e.g.
+        # **THOUGHTS**
+        # ...free text...
+        # **JSON**
+        # [ ... ]
+        thoughts, json_part = None, None
+
+        # Normalize markers (allow variations)
+        thoughts_marker = re.search(r"\*\*THOUGHTS\*\*", s, flags=re.IGNORECASE)
+        json_marker = re.search(r"\*\*JSON\*\*", s, flags=re.IGNORECASE)
+
+        if thoughts_marker and json_marker and thoughts_marker.start() < json_marker.start():
+            thoughts = s[thoughts_marker.end():json_marker.start()].strip()
+            json_part = s[json_marker.end():].strip()
+
+        # If JSON marker missing, try to extract first JSON array
+        if json_part is None:
+            # try direct array/object first
+            try:
+                obj = json.loads(s)
+                if isinstance(obj, list):
+                    return thoughts, s
+                if isinstance(obj, dict) and "events" in obj:
+                    return thoughts, json.dumps(obj["events"], ensure_ascii=False)
+            except Exception:
+                pass
+
+            # fallback: find first [...] block
+            start_positions = [m.start() for m in re.finditer(r"\[", s)]
+            for start in start_positions:
+                depth = 0
+                for end in range(start, len(s)):
+                    if s[end] == "[":
+                        depth += 1
+                    elif s[end] == "]":
+                        depth -= 1
+                        if depth == 0:
+                            candidate = s[start:end + 1]
+                            # sanity check
+                            try:
+                                arr = json.loads(candidate)
+                                if isinstance(arr, list):
+                                    json_part = candidate
+                                    break
+                            except Exception:
+                                break
+                if json_part is not None:
+                    break
+
+        return thoughts, json_part

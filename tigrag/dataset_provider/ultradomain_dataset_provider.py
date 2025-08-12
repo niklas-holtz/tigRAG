@@ -3,6 +3,7 @@ import os
 import json
 import requests
 import pandas as pd
+import logging
 from typing import Optional, Dict
 from ..dataset_provider.dataset_provider import DatasetProvider
 
@@ -27,9 +28,9 @@ class UltraDomainDatasetProvider(DatasetProvider):
                     with open(json_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                     df = pd.DataFrame(data)
-                    print(f"✓ {dataset_name} loaded locally: {df.shape}")
+                    logging.info(f"✓ {dataset_name} loaded locally: {df.shape}")
                 except Exception as e:
-                    print(f"✗ Failed to load {dataset_name}: {e}")
+                    logging.info(f"✗ Failed to load {dataset_name}: {e}")
                     continue
             else:
                 # Download from HF and save as JSON
@@ -41,19 +42,19 @@ class UltraDomainDatasetProvider(DatasetProvider):
                         lines = response.text.strip().split('\n')
                         data = [json.loads(line) for line in lines if line.strip()]
                         if not data:
-                            print(f"✗ {dataset_name} is empty.")
+                            logging.info(f"✗ {dataset_name} is empty.")
                             continue
                         df = pd.DataFrame(data)
 
                         with open(json_path, 'w', encoding='utf-8') as f:
                             json.dump(data, f, ensure_ascii=False, indent=2)
 
-                        print(f"✓ {dataset_name} downloaded and saved: {df.shape}")
+                        logging.info(f"✓ {dataset_name} downloaded and saved: {df.shape}")
                     else:
-                        print(f"✗ Failed to download {dataset_name}: HTTP {response.status_code}")
+                        logging.info(f"✗ Failed to download {dataset_name}: HTTP {response.status_code}")
                         continue
                 except Exception as e:
-                    print(f"✗ Error downloading {file}: {e}")
+                    logging.info(f"✗ Error downloading {file}: {e}")
                     continue
 
             if df is not None:

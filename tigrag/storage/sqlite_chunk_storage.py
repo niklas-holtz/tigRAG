@@ -38,13 +38,15 @@ class SQLiteChunkStorage(ChunkStorage):
                             )
                             """)
         # events table for extracted events
+        # events table
         self.cursor.execute("""
                             CREATE TABLE IF NOT EXISTS events
                             (
-                                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                                query        TEXT NOT NULL,
-                                retrieved_at TEXT NOT NULL,
-                                events_json  TEXT NOT NULL
+                                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                                query          TEXT NOT NULL,
+                                retrieved_at   TEXT NOT NULL,
+                                events_json    TEXT NOT NULL,
+                                relations_json TEXT DEFAULT '[]'
                             )
                             """)
         self.conn.commit()
@@ -128,9 +130,11 @@ class SQLiteChunkStorage(ChunkStorage):
             })
         return out
 
-    def insert_events(self, query: str, events: List[Dict[str, Any]], retrieved_at: Optional[str] = None):
+    # --- events API ---
+    def insert_events(self, query: str, events: List[Dict[str, Any]], retrieved_at: Optional[str] = None) -> int:
         """
-        Speichert eine Liste von Events als JSON-String mit Query und Zeitstempel.
+        Speichert Events als JSON mit Query und Zeitstempel.
+        Gibt die ID des neuen DB-Eintrags zurück.
         """
         if retrieved_at is None:
             retrieved_at = datetime.utcnow().isoformat()
@@ -141,29 +145,56 @@ class SQLiteChunkStorage(ChunkStorage):
                             VALUES (?, ?, ?)
                             """, (query, retrieved_at, events_json_str))
         self.conn.commit()
+        return self.cursor.lastrowid
 
-    def get_events(self, query: Optional[str] = None) -> List[Dict[str, Any]]:
+    def insert_relations(self, event_id: int, relations: List[Dict[str, Any]]):
         """
-        Lädt Events aus der DB. Optional gefiltert nach Query.
+        Aktualisiert die relations_json-Spalte für einen bestimmten Event-Datensatz.
+        """
+        relations_json_str = json.dumps(relations, ensure_ascii=False)
+        self.cursor.execute("""
+                            UPDATE events
+                            SET relations_json = ?
+                            WHERE id = ?
+                            """, (relations_json_str, event_id))
+        self.conn.commit()
+
+    def get_events(self, query: Optional[str] = None) -> tuple[Optional[int], List[Dict[str, Any]]]:
+        """
+        Retrieve the most recent events entry for a given query (or globally if no query provided).
+
+        Returns:
+            (id, events_list)
+            id: int or None if no entry exists
+            events_list: List[Dict[str, Any]]
         """
         if query:
-            self.cursor.execute("SELECT query, retrieved_at, events_json FROM events WHERE query = ?", (query,))
+            self.cursor.execute("""
+                                SELECT id, events_json
+                                FROM events
+                                WHERE query = ?
+                                ORDER BY retrieved_at DESC
+                                LIMIT 1
+                                """, (query,))
         else:
-            self.cursor.execute("SELECT query, retrieved_at, events_json FROM events")
-        rows = self.cursor.fetchall()
+            self.cursor.execute("""
+                                SELECT id, events_json
+                                FROM events
+                                ORDER BY retrieved_at DESC
+                                LIMIT 1
+                                """)
 
-        result = []
-        for q, ts, events_json in rows:
-            try:
-                events_list = json.loads(events_json)
-            except json.JSONDecodeError:
-                events_list = []
-            result.append({
-                "query": q,
-                "retrieved_at": ts,
-                "events": events_list
-            })
-        return result
+        row = self.cursor.fetchone()
+        if not row:
+            return None, []
+
+        eid, events_json = row
+        try:
+            events_list = json.loads(events_json) if events_json else []
+        except json.JSONDecodeError:
+            events_list = []
+
+        return eid, events_list
 
     # --- helper ---
     @staticmethod
