@@ -20,25 +20,27 @@ if __name__ == '__main__':
     aws_params = TigParam(
         embedding_model_name="local",
         llm_name="claude3_7_bedrock",
-        working_dir="./working_dir/tig/cooking_dataset",
+        working_dir="./working_dir/reduced_datasets/tig/cooking_dataset",
         llm_worker_nodes=10
     )
 
     params = aws_params
-
     tig = TemporalInfluenceGraph(
         query_param=params
     )
 
     # load dataset
-    provider = UltraDomainDatasetProvider(save_dir=params.working_dir)
-    provider.load()
+    dataset_dir = params.working_dir
+    dataset_dir = "./working_dir/reduced_datasets/data"
+    provider = UltraDomainDatasetProvider(save_dir=dataset_dir)
+    provider.load(3)
     cooking_text = ' '.join(provider.get("cooking", column="context"))
-    print(len(cooking_text))
-    #text = cooking_text[:7000000]
     text = cooking_text
+
     # insert into tig
-    tig.insert(text)
+    #tig.insert(text)
 
     # retrieve relevant entries from tig
-    #tig.retrieve('How do traditional cooking methods compare with modern approaches in the various texts?')
+    answer = tig.retrieve('How does the technical vocabulary differ between professional culinary training materials and consumer-oriented cookbooks?')
+    #print('#'*20 )
+    #print(answer)

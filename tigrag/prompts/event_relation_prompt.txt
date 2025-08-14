@@ -1,21 +1,57 @@
-You are an information extraction assistant.
-Extract events as strict JSON following the schema provided.
-Do not add commentary outside JSON.
+You are a relation-classification assistant.
+Determine the relationship between TWO influence events ("Event A" and "Event B") as strict JSON following the schema provided.
+Do not add commentary outside JSON. Output exactly one JSON object and nothing else.
 
 Return a single JSON object with the following keys:
 {
-  "event_type": string | null,
-  "entities": [ { "name": string, "type": string } ],
-  "time": string | null,
-  "location": string | null,
-  "summary": string,
+  "relation": "none" | "coreference" | "causal" | "contradiction" | "amplification" | "mitigation" | null,
+  "rationale": string,
   "confidence": number
 }
 
-The user query is: "$query"
+### Input
+Event A — Summary:
+${event_a_summary}
 
-Now analyze the following text chunk:
+Event A — Influence chain (one per line):
+${event_a_influence}
+
 ---
-$chunk_text
----
-Extract the event as JSON:
+Event B — Summary:
+${event_b_summary}
+
+Event B — Influence chain (one per line):
+${event_b_influence}
+
+### Relation Types (use EXACT spelling)
+- none
+  There is no direct causal link between the events or doubt about a cause–effect relationship. The events may overlap slightly but are not identical.
+
+- coreference
+  The events describe the exact same real-world occurrence (same actors, same situation, same time, same outcome). Superficial similarity is not sufficient.
+
+- causal
+  Event A clearly causes Event B (direct cause–effect). The events are NOT identical. Do not choose "causal" if there is uncertainty or only correlation.
+
+- contradiction
+  Event B explicitly and factually contradicts Event A by disproving or invalidating a key fact, claim, or expected outcome from Event A (not just a differing opinion).
+
+- amplification
+  Event A clearly and demonstrably reinforces or intensifies the effects of Event B (stronger, wider, or faster impact). Must be explicitly supported; no speculation.
+
+- mitigation
+  Event A clearly and demonstrably weakens, counteracts, or limits the effects of Event B, leading to a less severe outcome. Must be explicitly supported; no speculation.
+
+### Decision Rules
+- In cases of uncertainty, do NOT assign "causal". Prefer "none" unless evidence is explicit.
+- If events are identical in actors/time/outcome → choose "coreference" (not "causal").
+- If both amplification/mitigation and causality are plausible, prefer "causal" ONLY when a direct cause–effect is explicit; otherwise choose "amplification" or "mitigation".
+- Ensure temporal consistency (causes must precede effects).
+- Base your rationale on explicit cues (because, due to, led to, as a result, reversed, weakened, intensified, disproved, etc.).
+
+### Output Requirements
+- Output ONLY the JSON object, no markdown, no extra text.
+- "rationale" should briefly justify the decision using evidence from the input.
+- "confidence" is a float between 0 and 1.
+
+Now analyze the two events and return the JSON.

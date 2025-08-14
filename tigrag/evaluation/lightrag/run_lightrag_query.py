@@ -266,7 +266,7 @@ if __name__ == "__main__":
 
     # Choose run type: "ask" (single query) or "runfile" (iterate queries from an explicit FILE)
     RUN = "runfile"  # or: "ask"
-    MODE = "naive" # hybrid or naive
+    MODE = "hybrid" # hybrid or naive
 
     if RUN == "ask":
         QUERY = "How do the acknowledgments reflect the collaborative nature of culinary education between academic institutions and industry professionals?"
@@ -284,7 +284,7 @@ if __name__ == "__main__":
 
         # Output path for JSON (either a file like ".../my_answers.json" OR a directory;
         # if it's a directory or has no .json suffix, 'answers.json' will be created in it)
-        OUTPUT_JSON = "./working_dir/reduced_datasets/answers/naive_cooking_answers.json"
+        OUTPUT_JSON = f"./working_dir/reduced_datasets/answers/{MODE}_cooking_answers.json"
 
         results = run_queries_file_with_existing_graph(
             working_dir=WORKDIR,

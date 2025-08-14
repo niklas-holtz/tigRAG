@@ -19,8 +19,8 @@ class TigParam:
     text_chunker_breakpoint_percentile_threshold = 95
     """Percentile threshold for chunk breakpoints."""
 
-    text_chunker_min_chunk_size = 800
+    text_chunker_min_chunk_size = 2100
     """Minimum chunk size in characters."""
 
-    keyword_extraction_method = 'rake'
+    keyword_extraction_method = 'tfidf'
     """Keyword extraction method ('tfidf', 'yake', or 'rake')."""

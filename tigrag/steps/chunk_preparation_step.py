@@ -24,8 +24,8 @@ class ChunkPreparationStep(Step):
         logging.info("Starting ChunkPreparationStep: running k-means clustering with silhouette-based k selection...")
 
         clusters: List[List[Dict[str, Any]]] = self.cluster_chunks_kmeans(
-            k_min=4,
-            k_max=500,
+            k_min=10,
+            k_max=60,
             normalize=True,
             n_init=8,
             max_iter=300,

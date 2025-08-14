@@ -18,7 +18,7 @@ class EventRelationStep(Step):
     """
 
     def __init__(self, relation_prompt_path: str = "../prompts/event_relation_prompt.txt",
-                 max_workers: int = 4, top_n: int = 10):
+                 max_workers: int = 4, top_n: int = 20):
         self.max_workers = max_workers
         self.top_n = top_n
         self.prompt = self._load_prompt(relation_prompt_path)
@@ -73,20 +73,27 @@ class EventRelationStep(Step):
         """Call LLM to determine the relation between two events."""
         prompt = self._build_relation_prompt(ev_a, ev_b)
         try:
-            param = {
-                'max_new_tokens': 3000
-            }
+            param = {'max_new_tokens': 3000}
             relation_text = ctx.llm_invoker(message=[{"role": "user", "content": prompt}], parameters=param)
         except Exception as e:
             logging.error(f"LLM call failed for pair ({idx_a}, {idx_b}): {e}")
             relation_text = None
 
+        source_id = ev_a.get("id")
+        target_id = ev_b.get("id")
+
+        if source_id is None or target_id is None:
+            logging.warning(f"Missing event IDs for pair indices ({idx_a}, {idx_b}). "
+                            f"source_id={source_id}, target_id={target_id}")
+
         return {
-            "source_idx": idx_a,
-            "target_idx": idx_b,
-            "similarity": ctx.candidate_matrix[idx_a, idx_b],
+            "source_id": source_id,
+            "target_id": target_id,
+            "similarity": float(ctx.candidate_matrix[idx_a, idx_b]),
             "relation_raw": relation_text,
-            "retrieved_at": datetime.utcnow().isoformat()
+            "retrieved_at": datetime.utcnow().isoformat(),
+            "_source_idx": idx_a,
+            "_target_idx": idx_b,
         }
 
     def run(self, ctx: RetrieveContext) -> RetrieveContext:

@@ -12,6 +12,8 @@ from .steps.chunk_preparation_step import ChunkPreparationStep
 from .steps.chunk_selection_step import ChunkSelectionStep
 from .steps.event_extractor_step import EventExtractorStep
 from .steps.event_relation_step import EventRelationStep
+from .steps.event_rating_step import EventRatingStep
+from .steps.answer_generation_step import AnswerGenerationStep
 
 
 class TemporalInfluenceGraph:
@@ -71,13 +73,26 @@ class TemporalInfluenceGraph:
             ChunkPreparationStep(),
             ChunkSelectionStep(),
             EventExtractorStep(),
-            EventRelationStep()
+            EventRelationStep(),
+            EventRatingStep(),
+            AnswerGenerationStep()
         ]
 
         for step in pipeline:
             ctx = step.run(ctx)
 
-        return ctx
+
+        print('####'*8)
+        print(ctx.retrieval_context)
+        print('####'*8)
+
+        print('ANSWER')
+        
+        print('####'*8)
+        print(ctx.retrieval_answer)
+        print('####'*8)
+
+        return ctx.retrieval_answer
 
     def __del__(self):
         # Cleanly close DB connection when object is destroyed

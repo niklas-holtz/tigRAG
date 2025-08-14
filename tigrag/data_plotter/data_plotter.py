@@ -38,6 +38,7 @@ class DataPlotter:
         if with_timestamp:
             stem = f"{stem}_{self._ts()}"
         path = os.path.join(self.plots_dir, stem + ext)
+        print(f'Saved ... {self.plots_dir} ... ')
         fig.tight_layout()
         fig.savefig(path, dpi=dpi)
         plt.close(fig)

@@ -24,6 +24,8 @@ class RetrieveContext:
     scored: List[Dict[str, Any]] = field(default_factory=list)
     events: List[Dict[str, Any]] = field(default_factory=list)
     result: List[Dict[str, Any]] = field(default_factory=list)
+    retrieval_context: str = field(default_factory=str)
+    retrieval_answer: str = field(default_factory=str)
     # Beliebige Metadaten:
     meta: Dict[str, Any] = field(default_factory=dict)
 

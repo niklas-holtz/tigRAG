@@ -40,15 +40,16 @@ class SQLiteChunkStorage(ChunkStorage):
         # events table for extracted events
         # events table
         self.cursor.execute("""
-                            CREATE TABLE IF NOT EXISTS events
-                            (
-                                id             INTEGER PRIMARY KEY AUTOINCREMENT,
-                                query          TEXT NOT NULL,
-                                retrieved_at   TEXT NOT NULL,
-                                events_json    TEXT NOT NULL,
-                                relations_json TEXT DEFAULT '[]'
-                            )
-                            """)
+            CREATE TABLE IF NOT EXISTS events
+            (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                query          TEXT NOT NULL,
+                retrieved_at   TEXT NOT NULL,
+                events_json    TEXT NOT NULL,
+                relations_json TEXT DEFAULT '[]',
+                ratings_json   TEXT DEFAULT '[]'
+            )
+        """)
         self.conn.commit()
 
     # --- documents API ---
@@ -130,71 +131,101 @@ class SQLiteChunkStorage(ChunkStorage):
             })
         return out
 
-    # --- events API ---
+     # --- events API ---
     def insert_events(self, query: str, events: List[Dict[str, Any]], retrieved_at: Optional[str] = None) -> int:
-        """
-        Speichert Events als JSON mit Query und Zeitstempel.
-        Gibt die ID des neuen DB-Eintrags zurück.
-        """
         if retrieved_at is None:
             retrieved_at = datetime.utcnow().isoformat()
-
         events_json_str = json.dumps(events, ensure_ascii=False)
         self.cursor.execute("""
-                            INSERT INTO events (query, retrieved_at, events_json)
-                            VALUES (?, ?, ?)
-                            """, (query, retrieved_at, events_json_str))
+            INSERT INTO events (query, retrieved_at, events_json, relations_json, ratings_json)
+            VALUES (?, ?, ?, '[]', '[]')
+        """, (query, retrieved_at, events_json_str))
         self.conn.commit()
         return self.cursor.lastrowid
 
     def insert_relations(self, event_id: int, relations: List[Dict[str, Any]]):
-        """
-        Aktualisiert die relations_json-Spalte für einen bestimmten Event-Datensatz.
-        """
         relations_json_str = json.dumps(relations, ensure_ascii=False)
         self.cursor.execute("""
-                            UPDATE events
-                            SET relations_json = ?
-                            WHERE id = ?
-                            """, (relations_json_str, event_id))
+            UPDATE events
+            SET relations_json = ?
+            WHERE id = ?
+        """, (relations_json_str, event_id))
+        self.conn.commit()
+
+    def insert_ratings(self, event_id: int, ratings: List[Dict[str, Any]]):
+        ratings_json_str = json.dumps(ratings, ensure_ascii=False)
+        self.cursor.execute("""
+            UPDATE events
+            SET ratings_json = ?
+            WHERE id = ?
+        """, (ratings_json_str, event_id))
         self.conn.commit()
 
     def get_events(self, query: Optional[str] = None) -> tuple[Optional[int], List[Dict[str, Any]]]:
-        """
-        Retrieve the most recent events entry for a given query (or globally if no query provided).
-
-        Returns:
-            (id, events_list)
-            id: int or None if no entry exists
-            events_list: List[Dict[str, Any]]
-        """
         if query:
             self.cursor.execute("""
-                                SELECT id, events_json
-                                FROM events
-                                WHERE query = ?
-                                ORDER BY retrieved_at DESC
-                                LIMIT 1
-                                """, (query,))
+                SELECT id, events_json
+                FROM events
+                WHERE query = ?
+                ORDER BY retrieved_at DESC
+                LIMIT 1
+            """, (query,))
         else:
             self.cursor.execute("""
-                                SELECT id, events_json
-                                FROM events
-                                ORDER BY retrieved_at DESC
-                                LIMIT 1
-                                """)
-
+                SELECT id, events_json
+                FROM events
+                ORDER BY retrieved_at DESC
+                LIMIT 1
+            """)
         row = self.cursor.fetchone()
         if not row:
             return None, []
-
         eid, events_json = row
         try:
             events_list = json.loads(events_json) if events_json else []
         except json.JSONDecodeError:
             events_list = []
-
         return eid, events_list
+
+    def get_events_full(self, query: Optional[str] = None) -> tuple[Optional[int], List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """
+        Lädt die neueste Events-Zeile (optional gefiltert per query) und gibt
+        (id, events_list, relations_list, ratings_list) zurück.
+        """
+        if query:
+            self.cursor.execute("""
+                SELECT id, events_json, relations_json, ratings_json
+                FROM events
+                WHERE query = ?
+                ORDER BY retrieved_at DESC
+                LIMIT 1
+            """, (query,))
+        else:
+            self.cursor.execute("""
+                SELECT id, events_json, relations_json, ratings_json
+                FROM events
+                ORDER BY retrieved_at DESC
+                LIMIT 1
+            """)
+        row = self.cursor.fetchone()
+        if not row:
+            return None, [], [], []
+
+        eid, events_json, relations_json, ratings_json = row
+        try:
+            events_list = json.loads(events_json) if events_json else []
+        except json.JSONDecodeError:
+            events_list = []
+        try:
+            relations_list = json.loads(relations_json) if relations_json else []
+        except json.JSONDecodeError:
+            relations_list = []
+        try:
+            ratings_list = json.loads(ratings_json) if ratings_json else []
+        except json.JSONDecodeError:
+            ratings_list = []
+
+        return eid, events_list, relations_list, ratings_list
 
     # --- helper ---
     @staticmethod

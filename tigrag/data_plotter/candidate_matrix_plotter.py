@@ -63,6 +63,8 @@ class CandidateMatrixPlotter(DataPlotter):
         # Save using DataPlotter's method
         path = self.save_figure(fig, filename, with_timestamp=with_timestamp)
 
+        
+
         if show:
             plt.show()
 

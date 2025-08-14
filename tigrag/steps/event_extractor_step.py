@@ -91,6 +91,10 @@ class EventExtractorStep(Step):
                     self._attach_metadata(ev, chunk)
                 all_events.extend(events_for_chunk)
 
+        # Allocate ids
+        for idx, ev in enumerate(all_events, start=1):
+            ev["id"] = idx
+
         ctx.events = all_events
 
         # Persist to DB
