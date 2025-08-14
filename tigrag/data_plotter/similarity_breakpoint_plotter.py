@@ -15,44 +15,41 @@ class SimilarityBreakpointsPlotter(DataPlotter):
     def plot_distances_with_breakpoints(
         self,
         distances: np.ndarray,
-        breakpoints: List[int],
+        breakpoints: List[int],   # kept for API compatibility, no longer used for vertical lines
         threshold: float,
         *,
-        title: str = "Cosine distances & breakpoints",
-        filename: str = "distances_breakpoints.png",
+        title: str = "Cosine distances (with threshold highlights)",
+        filename: str = "distances_threshold_points.png",
         show: bool = False,
         with_timestamp: bool = True,
     ) -> str:
         """
-        Plot cosine distances as a line with the percentile threshold and vertical
-        lines for each breakpoint. Save under `<data_path>/plots`.
-
-        Args:
-            distances: shape (N-1,) where N is #sentences.
-            breakpoints: indices i where a break occurs (between sentence i and i+1).
-            threshold: percentile threshold used to mark raw breakpoints.
-            title: plot title.
-            filename: output file name (extension optional; defaults to .png).
-            show: if True, display window (useful in notebooks).
-            with_timestamp: append timestamp to file name for uniqueness.
-
-        Returns:
-            Absolute file path of the saved figure.
+        Plot cosine distances as a line; highlight points above threshold in red and draw a colored threshold line.
+        No vertical lines are drawn.
         """
         nm1 = int(len(distances))
         xs = np.arange(nm1)
 
-        fig, ax = plt.subplots(figsize=(12, 4))
-        ax.plot(xs, distances, marker="o", linewidth=1.5, markersize=3, label="cosine distance")
-        ax.axhline(threshold, linestyle="--", linewidth=1.0, label=f"threshold={threshold:.3f}")
+        # adaptive marker size for large series
+        if   nm1 <= 500:  msize = 3
+        elif nm1 <= 5000: msize = 2
+        else:             msize = 1
 
-        # Draw vertical lines at breakpoints
-        for bp in breakpoints:
-            if 0 <= bp < nm1:
-                ax.axvline(bp, color="red", linestyle=":", linewidth=1.0)
+        fig, ax = plt.subplots(figsize=(12, 4))
+
+        # base line
+        ax.plot(xs, distances, marker="o", linewidth=1.2, markersize=msize, label="cosine distance")
+
+        # colored horizontal threshold
+        ax.axhline(threshold, color="tab:orange", linestyle="--", linewidth=1.2, label=f"threshold = {threshold:.3g}")
+
+        # highlight points above threshold in red
+        mask = np.asarray(distances) > float(threshold)
+        if np.any(mask):
+            ax.scatter(xs[mask], np.asarray(distances)[mask], s=(msize+1)**2, color="red", label="above threshold", zorder=3)
 
         ax.set_title(title)
-        ax.set_xlabel("Sentence pair index (i means between sentence i and i+1)")
+        ax.set_xlabel("Sentence pair index (i = between sentence i and i+1)")
         ax.set_ylabel("Cosine distance")
         ax.grid(True, linestyle=":", linewidth=0.5, alpha=0.6)
         ax.legend(loc="best")
@@ -61,6 +58,7 @@ class SimilarityBreakpointsPlotter(DataPlotter):
             plt.show()
 
         return self.save_figure(fig, filename, with_timestamp=with_timestamp)
+
 
     def plot_chunk_boundaries(
         self,

@@ -76,7 +76,7 @@ class LLMInvoker:
 
         if parameters is None:
             parameters = {
-                "max_new_tokens": 1028,
+                "max_new_tokens": 6028,
                 "top_p": 0.95,
                 "temperature": 0.8
             }

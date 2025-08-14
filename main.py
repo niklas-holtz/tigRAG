@@ -18,9 +18,9 @@ if __name__ == '__main__':
     )
 
     aws_params = TigParam(
-        embedding_model_name="titan",
+        embedding_model_name="local",
         llm_name="claude3_7_bedrock",
-        working_dir="./data",
+        working_dir="./working_dir/tig/cooking_dataset",
         llm_worker_nodes=10
     )
 
@@ -35,10 +35,10 @@ if __name__ == '__main__':
     provider.load()
     cooking_text = ' '.join(provider.get("cooking", column="context"))
     print(len(cooking_text))
-    text = cooking_text[:7000000]
-    #text = cooking_text
+    #text = cooking_text[:7000000]
+    text = cooking_text
     # insert into tig
     tig.insert(text)
 
     # retrieve relevant entries from tig
-    tig.retrieve('How do traditional cooking methods compare with modern approaches in the various texts?')
+    #tig.retrieve('How do traditional cooking methods compare with modern approaches in the various texts?')

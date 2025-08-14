@@ -1,0 +1,281 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="created_at" attr.type="long" />
+  <key id="d10" for="edge" attr.name="file_path" attr.type="string" />
+  <key id="d9" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d8" for="edge" attr.name="keywords" attr.type="string" />
+  <key id="d7" for="edge" attr.name="description" attr.type="string" />
+  <key id="d6" for="edge" attr.name="weight" attr.type="double" />
+  <key id="d5" for="node" attr.name="created_at" attr.type="long" />
+  <key id="d4" for="node" attr.name="file_path" attr.type="string" />
+  <key id="d3" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d2" for="node" attr.name="description" attr.type="string" />
+  <key id="d1" for="node" attr.name="entity_type" attr.type="string" />
+  <key id="d0" for="node" attr.name="entity_id" attr.type="string" />
+  <graph edgedefault="undirected">
+    <node id="Artificial Intelligence">
+      <data key="d0">Artificial Intelligence</data>
+      <data key="d1">category</data>
+      <data key="d2">AI is mentioned as the broader field that encompasses Machine Learning as a core subfield.&lt;SEP&gt;Artificial Intelligence (AI) is a multidisciplinary field of computer science focused on creating systems capable of performing tasks that typically require human intelligence. It encompasses natural language processing, computer vision, robotics, and expert systems. AI research aims to mimic human reasoning and perception and design self-improving algorithms.</data>
+      <data key="d3">chunk-194b128529d8e3687b4dbc5780c077a3&lt;SEP&gt;chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077694</data>
+    </node>
+    <node id="Natural Language Processing">
+      <data key="d0">Natural Language Processing</data>
+      <data key="d1">category</data>
+      <data key="d2">Natural Language Processing is a subfield of Artificial Intelligence mentioned in the text.</data>
+      <data key="d3">chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077667</data>
+    </node>
+    <node id="Computer Vision">
+      <data key="d0">Computer Vision</data>
+      <data key="d1">category</data>
+      <data key="d2">Computer Vision is a subfield of Artificial Intelligence mentioned in the text.</data>
+      <data key="d3">chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077667</data>
+    </node>
+    <node id="Robotics">
+      <data key="d0">Robotics</data>
+      <data key="d1">category</data>
+      <data key="d2">Robotics is a subfield of Artificial Intelligence mentioned in the text.</data>
+      <data key="d3">chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077667</data>
+    </node>
+    <node id="Expert Systems">
+      <data key="d0">Expert Systems</data>
+      <data key="d1">category</data>
+      <data key="d2">Expert Systems is a subfield of Artificial Intelligence mentioned in the text.</data>
+      <data key="d3">chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077667</data>
+    </node>
+    <node id="Machine Learning">
+      <data key="d0">Machine Learning</data>
+      <data key="d1">category</data>
+      <data key="d2">Machine Learning (ML) is mentioned as the broader field that includes Deep Learning as a specialized branch.&lt;SEP&gt;Machine Learning is a core subfield of AI that involves developing algorithms enabling computers to learn from data and make predictions or decisions. ML systems identify patterns in datasets and improve their performance as they process more information.</data>
+      <data key="d3">chunk-194b128529d8e3687b4dbc5780c077a3&lt;SEP&gt;chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077737</data>
+    </node>
+    <node id="Spam Detection">
+      <data key="d0">Spam Detection</data>
+      <data key="d1">category</data>
+      <data key="d2">Spam detection is mentioned as one of the applications of Machine Learning.</data>
+      <data key="d3">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077694</data>
+    </node>
+    <node id="Medical Diagnosis">
+      <data key="d0">Medical Diagnosis</data>
+      <data key="d1">category</data>
+      <data key="d2">Medical diagnosis is listed as one of the applications of Machine Learning.</data>
+      <data key="d3">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077694</data>
+    </node>
+    <node id="Recommendation Systems">
+      <data key="d0">Recommendation Systems</data>
+      <data key="d1">category</data>
+      <data key="d2">Recommendation systems are mentioned as one of the applications of Machine Learning.</data>
+      <data key="d3">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077694</data>
+    </node>
+    <node id="Financial Forecasting">
+      <data key="d0">Financial Forecasting</data>
+      <data key="d1">category</data>
+      <data key="d2">Financial forecasting is noted as one of the applications of Machine Learning.</data>
+      <data key="d3">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077694</data>
+    </node>
+    <node id="Deep Learning">
+      <data key="d0">Deep Learning</data>
+      <data key="d1">category</data>
+      <data key="d2">Deep Learning (DL) is a specialized branch of Machine Learning that uses multi-layered artificial neural networks to model complex patterns in large datasets. It requires substantial computational resources and large volumes of labeled data but often achieves state-of-the-art results in many AI benchmarks.</data>
+      <data key="d3">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077737</data>
+    </node>
+    <node id="Artificial Neural Networks">
+      <data key="d0">Artificial Neural Networks</data>
+      <data key="d1">category</data>
+      <data key="d2">Multi-layered artificial neural networks are the key components used in Deep Learning to model complex patterns in large datasets.</data>
+      <data key="d3">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077737</data>
+    </node>
+    <node id="Image Recognition">
+      <data key="d0">Image Recognition</data>
+      <data key="d1">category</data>
+      <data key="d2">Image recognition is mentioned as an area where Deep Learning has been particularly successful.</data>
+      <data key="d3">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077737</data>
+    </node>
+    <node id="Speech Recognition">
+      <data key="d0">Speech Recognition</data>
+      <data key="d1">category</data>
+      <data key="d2">Speech recognition is mentioned as an area where Deep Learning has been particularly successful.</data>
+      <data key="d3">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077737</data>
+    </node>
+    <node id="Natural Language Understanding">
+      <data key="d0">Natural Language Understanding</data>
+      <data key="d1">category</data>
+      <data key="d2">Natural language understanding is mentioned as an area where Deep Learning has been particularly successful.</data>
+      <data key="d3">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077737</data>
+    </node>
+    <node id="Autonomous Driving">
+      <data key="d0">Autonomous Driving</data>
+      <data key="d1">category</data>
+      <data key="d2">Autonomous driving is mentioned as an area where Deep Learning has been particularly successful.</data>
+      <data key="d3">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077737</data>
+    </node>
+    <node id="AI Benchmarks">
+      <data key="d0">AI Benchmarks</data>
+      <data key="d1">category</data>
+      <data key="d2">AI benchmarks are mentioned as tests where Deep Learning models often achieve state-of-the-art results.</data>
+      <data key="d3">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d4">unknown_source</data>
+      <data key="d5">1755077737</data>
+    </node>
+    <edge source="Artificial Intelligence" target="Natural Language Processing">
+      <data key="d6">9.0</data>
+      <data key="d7">Natural Language Processing is described as a subfield of Artificial Intelligence.</data>
+      <data key="d8">academic discipline,hierarchical relationship</data>
+      <data key="d9">chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077667</data>
+    </edge>
+    <edge source="Artificial Intelligence" target="Computer Vision">
+      <data key="d6">9.0</data>
+      <data key="d7">Computer Vision is described as a subfield of Artificial Intelligence.</data>
+      <data key="d8">academic discipline,hierarchical relationship</data>
+      <data key="d9">chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077667</data>
+    </edge>
+    <edge source="Artificial Intelligence" target="Robotics">
+      <data key="d6">9.0</data>
+      <data key="d7">Robotics is described as a subfield of Artificial Intelligence.</data>
+      <data key="d8">academic discipline,hierarchical relationship</data>
+      <data key="d9">chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077667</data>
+    </edge>
+    <edge source="Artificial Intelligence" target="Expert Systems">
+      <data key="d6">9.0</data>
+      <data key="d7">Expert Systems is described as a subfield of Artificial Intelligence.</data>
+      <data key="d8">academic discipline,hierarchical relationship</data>
+      <data key="d9">chunk-81d7644a8cd43de47b3fdda336d80808</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077667</data>
+    </edge>
+    <edge source="Artificial Intelligence" target="Machine Learning">
+      <data key="d6">9.0</data>
+      <data key="d7">Machine Learning is described as a core subfield of Artificial Intelligence, indicating it is a specialized component of the broader AI discipline.</data>
+      <data key="d8">field classification,hierarchical relationship</data>
+      <data key="d9">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077694</data>
+    </edge>
+    <edge source="Machine Learning" target="Spam Detection">
+      <data key="d6">7.0</data>
+      <data key="d7">Spam detection is listed as one of the applications of Machine Learning systems.</data>
+      <data key="d8">data analysis,practical application</data>
+      <data key="d9">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077694</data>
+    </edge>
+    <edge source="Machine Learning" target="Medical Diagnosis">
+      <data key="d6">7.0</data>
+      <data key="d7">Medical diagnosis is mentioned as one of the applications of Machine Learning technology.</data>
+      <data key="d8">healthcare application,pattern recognition</data>
+      <data key="d9">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077694</data>
+    </edge>
+    <edge source="Machine Learning" target="Recommendation Systems">
+      <data key="d6">7.0</data>
+      <data key="d7">Recommendation systems are described as one of the applications of Machine Learning.</data>
+      <data key="d8">data-driven suggestions,user personalization</data>
+      <data key="d9">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077694</data>
+    </edge>
+    <edge source="Machine Learning" target="Financial Forecasting">
+      <data key="d6">7.0</data>
+      <data key="d7">Financial forecasting is identified as one of the applications of Machine Learning.</data>
+      <data key="d8">data modeling,economic prediction</data>
+      <data key="d9">chunk-194b128529d8e3687b4dbc5780c077a3</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077694</data>
+    </edge>
+    <edge source="Machine Learning" target="Deep Learning">
+      <data key="d6">9.0</data>
+      <data key="d7">Deep Learning is described as a specialized branch of Machine Learning, indicating a hierarchical relationship where Deep Learning is a subset of Machine Learning.</data>
+      <data key="d8">categorization,specialization</data>
+      <data key="d9">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077737</data>
+    </edge>
+    <edge source="Deep Learning" target="Artificial Neural Networks">
+      <data key="d6">10.0</data>
+      <data key="d7">Deep Learning uses multi-layered artificial neural networks as its core technology to model complex patterns in large datasets.</data>
+      <data key="d8">methodology,technological foundation</data>
+      <data key="d9">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077737</data>
+    </edge>
+    <edge source="Deep Learning" target="Image Recognition">
+      <data key="d6">8.0</data>
+      <data key="d7">Deep Learning has been particularly successful in image recognition applications.</data>
+      <data key="d8">application area,technological success</data>
+      <data key="d9">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077737</data>
+    </edge>
+    <edge source="Deep Learning" target="Speech Recognition">
+      <data key="d6">8.0</data>
+      <data key="d7">Deep Learning has been particularly successful in speech recognition applications.</data>
+      <data key="d8">application area,technological success</data>
+      <data key="d9">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077737</data>
+    </edge>
+    <edge source="Deep Learning" target="Natural Language Understanding">
+      <data key="d6">8.0</data>
+      <data key="d7">Deep Learning has been particularly successful in natural language understanding applications.</data>
+      <data key="d8">application area,technological success</data>
+      <data key="d9">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077737</data>
+    </edge>
+    <edge source="Deep Learning" target="Autonomous Driving">
+      <data key="d6">8.0</data>
+      <data key="d7">Deep Learning has been particularly successful in autonomous driving applications.</data>
+      <data key="d8">application area,technological success</data>
+      <data key="d9">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077737</data>
+    </edge>
+    <edge source="Deep Learning" target="AI Benchmarks">
+      <data key="d6">9.0</data>
+      <data key="d7">Deep Learning models often achieve state-of-the-art results in many AI benchmarks, demonstrating their effectiveness.</data>
+      <data key="d8">performance evaluation,technological achievement</data>
+      <data key="d9">chunk-b9298993d567dd5146a8f28ec6837ae1</data>
+      <data key="d10">unknown_source</data>
+      <data key="d11">1755077737</data>
+    </edge>
+  </graph>
+</graphml>

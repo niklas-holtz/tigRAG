@@ -7,14 +7,14 @@ import logging
 from typing import Optional, Dict
 from ..dataset_provider.dataset_provider import DatasetProvider
 
-
 class UltraDomainDatasetProvider(DatasetProvider):
     BASE_URL = "https://huggingface.co/datasets/TommyChien/UltraDomain/resolve/main/"
-    FILES = ["agriculture.jsonl", "cooking.jsonl", "history.jsonl", "bioprotocol.jsonl"]
+    FILES = ["agriculture.jsonl", "cooking.jsonl", "history.jsonl", "computer.jsonl"]
 
-    def load(self) -> None:
+    def load(self, max_rows: Optional[int] = None) -> None:
         """
         Download or load UltraDomain datasets and store them in self.datasets.
+        If max_rows is not None, keep only the first `max_rows` rows per dataset in memory.
         """
         for file in self.FILES:
             dataset_name = file.replace('.jsonl', '')
@@ -46,6 +46,7 @@ class UltraDomainDatasetProvider(DatasetProvider):
                             continue
                         df = pd.DataFrame(data)
 
+                        # save FULL dataset to disk
                         with open(json_path, 'w', encoding='utf-8') as f:
                             json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -57,5 +58,13 @@ class UltraDomainDatasetProvider(DatasetProvider):
                     logging.info(f"✗ Error downloading {file}: {e}")
                     continue
 
+            # Optional: limit rows in-memory
             if df is not None:
+                if max_rows is not None:
+                    if max_rows <= 0:
+                        logging.info(f"↷ Skipping limit for {dataset_name}: max_rows={max_rows} (must be > 0)")
+                    else:
+                        df = df.iloc[:max_rows].copy()
+                        logging.info(f"→ {dataset_name} limited to first {len(df)} rows")
                 self.datasets[dataset_name] = df
+

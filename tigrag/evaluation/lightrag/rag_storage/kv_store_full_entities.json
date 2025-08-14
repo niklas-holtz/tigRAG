@@ -1,0 +1,45 @@
+{
+  "doc-81d7644a8cd43de47b3fdda336d80808": {
+    "entity_names": [
+      "Artificial Intelligence",
+      "Expert Systems",
+      "Robotics",
+      "Natural Language Processing",
+      "Computer Vision"
+    ],
+    "count": 5,
+    "create_time": 1755077667,
+    "update_time": 1755077667,
+    "_id": "doc-81d7644a8cd43de47b3fdda336d80808"
+  },
+  "doc-194b128529d8e3687b4dbc5780c077a3": {
+    "entity_names": [
+      "Machine Learning",
+      "Artificial Intelligence",
+      "Financial Forecasting",
+      "Spam Detection",
+      "Recommendation Systems",
+      "Medical Diagnosis"
+    ],
+    "count": 6,
+    "create_time": 1755077694,
+    "update_time": 1755077694,
+    "_id": "doc-194b128529d8e3687b4dbc5780c077a3"
+  },
+  "doc-b9298993d567dd5146a8f28ec6837ae1": {
+    "entity_names": [
+      "Machine Learning",
+      "Artificial Neural Networks",
+      "Autonomous Driving",
+      "Deep Learning",
+      "Natural Language Understanding",
+      "Speech Recognition",
+      "AI Benchmarks",
+      "Image Recognition"
+    ],
+    "count": 8,
+    "create_time": 1755077737,
+    "update_time": 1755077737,
+    "_id": "doc-b9298993d567dd5146a8f28ec6837ae1"
+  }
+}

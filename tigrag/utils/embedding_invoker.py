@@ -15,6 +15,7 @@ import boto3
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from botocore.exceptions import ClientError
 from math import exp
+import torch
 
 # Bedrock
 import boto3
@@ -134,7 +135,10 @@ class EmbeddingInvoker:
     # ---------------------------
     def init_paraphrase_model(self):
         if "paraphrase" not in EmbeddingInvoker._loaded_models:
-            model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            logging.info(f"Loading embedding model on {device.upper()}..."
+                         f"({torch.cuda.get_device_name(0) if device == 'cuda' else 'CPU'})")
+            model = SentenceTransformer("paraphrase-MiniLM-L6-v2", device=device)
             EmbeddingInvoker._loaded_models["paraphrase"] = model
         self.model = EmbeddingInvoker._loaded_models["paraphrase"]
 

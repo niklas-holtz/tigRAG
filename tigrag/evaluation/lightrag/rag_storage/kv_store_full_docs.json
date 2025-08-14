@@ -1,0 +1,20 @@
+{
+  "doc-81d7644a8cd43de47b3fdda336d80808": {
+    "content": "Artificial Intelligence (AI) is a multidisciplinary field of computer science focused on creating systems capable of performing tasks that typically require human intelligence.         It encompasses a wide range of subfields, including natural language processing, computer vision, robotics, and expert systems.         The goal of AI research is not only to mimic human reasoning and perception but also to design algorithms that can adapt and improve over time.",
+    "create_time": 1755077643,
+    "update_time": 1755077643,
+    "_id": "doc-81d7644a8cd43de47b3fdda336d80808"
+  },
+  "doc-194b128529d8e3687b4dbc5780c077a3": {
+    "content": "Machine Learning (ML) is a core subfield of AI that involves developing algorithms that enable computers to learn from and make predictions or decisions based on data.         Instead of being explicitly programmed for every task, ML systems identify patterns in datasets and refine their performance as they process more information.         Applications range from spam detection and medical diagnosis to recommendation systems and financial forecasting.",
+    "create_time": 1755077667,
+    "update_time": 1755077667,
+    "_id": "doc-194b128529d8e3687b4dbc5780c077a3"
+  },
+  "doc-b9298993d567dd5146a8f28ec6837ae1": {
+    "content": "Deep Learning (DL) is a specialized branch of ML that uses multi-layered artificial neural networks to model complex patterns in large datasets.         It has been particularly successful in areas such as image and speech recognition, natural language understanding, and autonomous driving.         DL models require substantial computational resources and large volumes of labeled data, but they often achieve state-of-the-art results in many AI benchmarks.",
+    "create_time": 1755077694,
+    "update_time": 1755077694,
+    "_id": "doc-b9298993d567dd5146a8f28ec6837ae1"
+  }
+}

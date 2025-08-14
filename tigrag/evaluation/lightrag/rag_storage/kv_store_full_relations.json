@@ -1,0 +1,90 @@
+{
+  "doc-81d7644a8cd43de47b3fdda336d80808": {
+    "relation_pairs": [
+      [
+        "Artificial Intelligence",
+        "Expert Systems"
+      ],
+      [
+        "Artificial Intelligence",
+        "Natural Language Processing"
+      ],
+      [
+        "Artificial Intelligence",
+        "Computer Vision"
+      ],
+      [
+        "Artificial Intelligence",
+        "Robotics"
+      ]
+    ],
+    "count": 4,
+    "create_time": 1755077667,
+    "update_time": 1755077667,
+    "_id": "doc-81d7644a8cd43de47b3fdda336d80808"
+  },
+  "doc-194b128529d8e3687b4dbc5780c077a3": {
+    "relation_pairs": [
+      [
+        "Financial Forecasting",
+        "Machine Learning"
+      ],
+      [
+        "Machine Learning",
+        "Medical Diagnosis"
+      ],
+      [
+        "Machine Learning",
+        "Spam Detection"
+      ],
+      [
+        "Artificial Intelligence",
+        "Machine Learning"
+      ],
+      [
+        "Machine Learning",
+        "Recommendation Systems"
+      ]
+    ],
+    "count": 5,
+    "create_time": 1755077694,
+    "update_time": 1755077694,
+    "_id": "doc-194b128529d8e3687b4dbc5780c077a3"
+  },
+  "doc-b9298993d567dd5146a8f28ec6837ae1": {
+    "relation_pairs": [
+      [
+        "Deep Learning",
+        "Machine Learning"
+      ],
+      [
+        "Autonomous Driving",
+        "Deep Learning"
+      ],
+      [
+        "Artificial Neural Networks",
+        "Deep Learning"
+      ],
+      [
+        "Deep Learning",
+        "Image Recognition"
+      ],
+      [
+        "AI Benchmarks",
+        "Deep Learning"
+      ],
+      [
+        "Deep Learning",
+        "Speech Recognition"
+      ],
+      [
+        "Deep Learning",
+        "Natural Language Understanding"
+      ]
+    ],
+    "count": 7,
+    "create_time": 1755077737,
+    "update_time": 1755077737,
+    "_id": "doc-b9298993d567dd5146a8f28ec6837ae1"
+  }
+}

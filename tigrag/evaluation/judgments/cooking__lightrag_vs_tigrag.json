@@ -1,0 +1,95 @@
+{
+  "dataset": "cooking",
+  "method_a": "lightrag",
+  "method_b": "tigrag",
+  "items": [
+    {
+      "query": "How can I make a vegan chocolate cake?",
+      "evaluation": {
+        "Comprehensiveness": {
+          "Winner": "Answer 2",
+          "Explanation": "Answer 2 provides more comprehensive coverage by mentioning additional important considerations like ensuring sugar is vegan-friendly (some sugars are processed with bone char) and including frosting as part of the complete cake-making process. It also mentions mashed bananas as an egg substitute option alongside flax eggs, giving more complete ingredient guidance."
+        },
+        "Diversity": {
+          "Winner": "Answer 1",
+          "Explanation": "Answer 1 offers more diverse egg replacement options by mentioning both flaxseed and applesauce, and provides more variety in plant-based milk options by specifically naming both almond and oat milk. This gives readers more alternatives to choose from based on their preferences, allergies, or availability."
+        },
+        "Empowerment": {
+          "Winner": "Answer 1",
+          "Explanation": "Answer 1 better empowers the reader by providing more specific technical guidance, such as the important baking technique of mixing dry and wet ingredients separately before combining, and the practical doneness test of using a toothpick. These details help ensure baking success and give the reader confidence in executing the recipe properly."
+        },
+        "Overall Winner": {
+          "Winner": "Answer 1",
+          "Explanation": "While Answer 2 wins on comprehensiveness by covering more aspects of the complete cake-making process, Answer 1 excels in both diversity and empowerment. Answer 1's strength in providing varied ingredient options and crucial technical details that ensure baking success makes it more valuable for someone actually attempting to make a vegan chocolate cake. The practical guidance and multiple alternatives give readers better tools to adapt the recipe to their needs and execute it successfully."
+        }
+      }
+    },
+    {
+      "query": "What are the key steps in baking a sourdough bread?",
+      "evaluation": {
+        "Comprehensiveness": {
+          "Winner": "Answer 2",
+          "Explanation": "Answer 2 provides more comprehensive coverage of the sourdough baking process. It includes essential details that Answer 1 omits, such as adding salt (a crucial ingredient), kneading the dough, scoring before baking, and the specific recommendation to use a Dutch oven. Answer 1 mentions steam creation but lacks other important steps, while Answer 2 covers more of the complete process from start to finish."
+        },
+        "Diversity": {
+          "Winner": "Answer 2",
+          "Explanation": "Answer 2 offers more diverse insights and techniques. It provides a specific baking method (Dutch oven) which represents a popular and effective approach, mentions scoring (which affects both appearance and baking), and includes kneading as a technique. Answer 1 mentions steam creation as one approach but doesn't offer as many varied perspectives on the different aspects and techniques involved in sourdough baking."
+        },
+        "Empowerment": {
+          "Winner": "Answer 2",
+          "Explanation": "Answer 2 better empowers readers to successfully bake sourdough bread. By including salt as an ingredient, mentioning kneading, explaining the scoring step, and recommending a Dutch oven, it provides more actionable and practical information. The mention of scoring and Dutch oven baking gives readers specific techniques that significantly impact the final result. Answer 1, while mentioning steam, doesn't provide enough practical details for a beginner to feel confident about the process."
+        },
+        "Overall Winner": {
+          "Winner": "Answer 2",
+          "Explanation": "Answer 2 wins across all three criteria by providing a more complete, detailed, and practical guide to sourdough baking. It includes essential ingredients (salt), important techniques (kneading, scoring), and specific equipment recommendations (Dutch oven) that Answer 1 lacks. While both answers cover the basic flow, Answer 2 gives readers more actionable information and diverse approaches that would lead to better baking results."
+        }
+      }
+    }
+  ],
+  "final_eval": {
+    "Comprehensiveness": {
+      "method_a": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "method_b": {
+        "count": 2,
+        "percent": 100.0
+      },
+      "total": 2
+    },
+    "Diversity": {
+      "method_a": {
+        "count": 1,
+        "percent": 50.0
+      },
+      "method_b": {
+        "count": 1,
+        "percent": 50.0
+      },
+      "total": 2
+    },
+    "Empowerment": {
+      "method_a": {
+        "count": 1,
+        "percent": 50.0
+      },
+      "method_b": {
+        "count": 1,
+        "percent": 50.0
+      },
+      "total": 2
+    },
+    "Overall": {
+      "method_a": {
+        "count": 1,
+        "percent": 50.0
+      },
+      "method_b": {
+        "count": 1,
+        "percent": 50.0
+      },
+      "total": 2
+    }
+  }
+}

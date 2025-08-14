@@ -13,6 +13,7 @@ from .steps.chunk_selection_step import ChunkSelectionStep
 from .steps.event_extractor_step import EventExtractorStep
 from .steps.event_relation_step import EventRelationStep
 
+
 class TemporalInfluenceGraph:
     def __init__(self, query_param: TigParam):
         self.query_param = query_param
@@ -26,7 +27,7 @@ class TemporalInfluenceGraph:
 
         # Create llm function
         self.llm_func = LLMInvoker(
-            self.query_param.llm_name, 
+            self.query_param.llm_name,
             self.query_param.working_dir
         )
         # Load model
@@ -41,8 +42,10 @@ class TemporalInfluenceGraph:
         doc_id = self.chunk_stor.upsert_document(text)
 
         # 2) chunk the text
-        text_chunker = TextChunker(self.embedding_func, self.query_param.working_dir)
-        chunks = text_chunker.chunk(text, min_length=10)
+        text_chunker = TextChunker(
+            self.embedding_func, self.query_param.working_dir)
+        chunks = text_chunker.chunk(text, min_length=self.query_param.text_chunker_min_chunk_size,
+                                    breakpoint_percentile_threshold=self.query_param.text_chunker_breakpoint_percentile_threshold, keyword_extraction_method=self.query_param.keyword_extraction_method)
 
         for chunk in chunks:
             self.chunk_stor.insert_chunk(
@@ -50,7 +53,7 @@ class TemporalInfluenceGraph:
                 to_idx=int(chunk['to_idx']),
                 text=chunk['text'],
                 keywords=chunk.get("keywords", []),
-                embedding=chunk.get("keyword_embedding", None),
+                embedding=chunk.get("chunk_embedding", None),
                 doc_id=doc_id,
             )
 

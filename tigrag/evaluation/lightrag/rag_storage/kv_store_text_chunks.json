@@ -1,0 +1,44 @@
+{
+  "chunk-81d7644a8cd43de47b3fdda336d80808": {
+    "tokens": 78,
+    "content": "Artificial Intelligence (AI) is a multidisciplinary field of computer science focused on creating systems capable of performing tasks that typically require human intelligence.         It encompasses a wide range of subfields, including natural language processing, computer vision, robotics, and expert systems.         The goal of AI research is not only to mimic human reasoning and perception but also to design algorithms that can adapt and improve over time.",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-81d7644a8cd43de47b3fdda336d80808",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:71610189a8f2a8882c13c20059a21551",
+      "default:extract:d0683c76f0d14061d59c968ee07051db"
+    ],
+    "create_time": 1755077643,
+    "update_time": 1755077667,
+    "_id": "chunk-81d7644a8cd43de47b3fdda336d80808"
+  },
+  "chunk-194b128529d8e3687b4dbc5780c077a3": {
+    "tokens": 73,
+    "content": "Machine Learning (ML) is a core subfield of AI that involves developing algorithms that enable computers to learn from and make predictions or decisions based on data.         Instead of being explicitly programmed for every task, ML systems identify patterns in datasets and refine their performance as they process more information.         Applications range from spam detection and medical diagnosis to recommendation systems and financial forecasting.",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-194b128529d8e3687b4dbc5780c077a3",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:07da74643a0c0a5ad4058b9ccd74f452",
+      "default:extract:da6ea79333a2aea9f40468e26e818fbd"
+    ],
+    "create_time": 1755077667,
+    "update_time": 1755077694,
+    "_id": "chunk-194b128529d8e3687b4dbc5780c077a3"
+  },
+  "chunk-b9298993d567dd5146a8f28ec6837ae1": {
+    "tokens": 78,
+    "content": "Deep Learning (DL) is a specialized branch of ML that uses multi-layered artificial neural networks to model complex patterns in large datasets.         It has been particularly successful in areas such as image and speech recognition, natural language understanding, and autonomous driving.         DL models require substantial computational resources and large volumes of labeled data, but they often achieve state-of-the-art results in many AI benchmarks.",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-b9298993d567dd5146a8f28ec6837ae1",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:005e78c9be25ba71d306502cbe5601bf",
+      "default:extract:7c2cf9e75239f857f39752155a7bb032"
+    ],
+    "create_time": 1755077694,
+    "update_time": 1755077737,
+    "_id": "chunk-b9298993d567dd5146a8f28ec6837ae1"
+  }
+}
