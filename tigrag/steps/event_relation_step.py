@@ -18,7 +18,7 @@ class EventRelationStep(Step):
     """
 
     def __init__(self, relation_prompt_path: str = "../prompts/event_relation_prompt.txt",
-                 max_workers: int = 4, top_n: int = 20):
+                 max_workers: int = 10, top_n: int = 40):
         self.max_workers = max_workers
         self.top_n = top_n
         self.prompt = self._load_prompt(relation_prompt_path)

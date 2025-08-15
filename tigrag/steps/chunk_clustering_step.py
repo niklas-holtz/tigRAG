@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ..steps.step import Step, RetrieveContext
+from .step import Step, RetrieveContext
 
 from typing import List, Dict, Any, Optional, Sequence
 import numpy as np
@@ -11,7 +11,7 @@ from sklearn.metrics import silhouette_score
 from ..data_plotter.silhouette_curve_plotter import SilhouetteCurvePlotter
 
 
-class ChunkPreparationStep(Step):
+class ChunkClusteringStep(Step):
     """
     Loads chunk embeddings, selects k via silhouette score, performs KMeans,
     and stores clusters into ctx. Also plots silhouette score vs k if data_path is provided.

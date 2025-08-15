@@ -49,11 +49,11 @@ class ChunkEmbeddingPreprocessor:
             - n_phrases: int
         """
         self.method = method
-        self.method = 'rake'
         self.method_kwargs = method_kwargs
         self._identifier = method_kwargs.pop('identifier', 'text')
 
         self.method_dispatch = {
+            "none": self._no_keywords,
             "tfidf": self._tfidf_keywords,
             "yake": self._yake_keywords,
             "rake": self._rake_keywords 
@@ -85,6 +85,10 @@ class ChunkEmbeddingPreprocessor:
         order = np.argsort(-val[topk_local])  # absteigend sortieren
         top = [feature_names[idx[i]] for i in topk_local[order] if val[i] > 0]
         return top
+
+    
+    def _no_keywords(self, text, corpus=None, n_keywords=15, reverse=True):
+        return text    
 
     def _tfidf_keywords(self, text, corpus=None, n_keywords=15, reverse=True):
         if corpus is None:

@@ -21,7 +21,8 @@ if __name__ == '__main__':
         embedding_model_name="local",
         llm_name="claude3_7_bedrock",
         working_dir="./working_dir/reduced_datasets/tig/cooking_dataset",
-        llm_worker_nodes=10
+        llm_worker_nodes=10,
+        keyword_extraction_method='none'
     )
 
     params = aws_params
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     text = cooking_text
 
     # insert into tig
-    #tig.insert(text)
+    tig.insert(text)
 
     # retrieve relevant entries from tig
     answer = tig.retrieve('How does the technical vocabulary differ between professional culinary training materials and consumer-oriented cookbooks?')

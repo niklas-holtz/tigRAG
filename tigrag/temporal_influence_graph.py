@@ -8,7 +8,7 @@ from .utils.tig_param import TigParam
 from .nlp.text_chunker import TextChunker
 from .storage.sqlite_chunk_storage import SQLiteChunkStorage
 from .steps.step import RetrieveContext
-from .steps.chunk_preparation_step import ChunkPreparationStep
+from .steps.chunk_clustering_step import ChunkClusteringStep
 from .steps.chunk_selection_step import ChunkSelectionStep
 from .steps.event_extractor_step import EventExtractorStep
 from .steps.event_relation_step import EventRelationStep
@@ -70,7 +70,7 @@ class TemporalInfluenceGraph:
         )
 
         pipeline = [
-            ChunkPreparationStep(),
+            ChunkClusteringStep(),
             ChunkSelectionStep(),
             EventExtractorStep(),
             EventRelationStep(),

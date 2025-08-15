@@ -32,7 +32,7 @@ class EventExtractorStep(Step):
     def __init__(
         self,
         max_retries: int = 2,
-        max_workers: int = 1
+        max_workers: int = 10
     ):
         self.prompt = self._load_prompt('../prompts/influence_event_prompt.txt')
         self._prompt_tmpl = Template(self.prompt) if self.prompt else None

@@ -13,7 +13,7 @@ class TigParam:
     working_dir: str
     """Directory for storing intermediate files, plots, and outputs."""
 
-    llm_worker_nodes: int = 1
+    llm_worker_nodes: int = 10
     """Number of LLM worker nodes to use in parallel processing."""
 
     text_chunker_breakpoint_percentile_threshold = 95
@@ -22,5 +22,5 @@ class TigParam:
     text_chunker_min_chunk_size = 2100
     """Minimum chunk size in characters."""
 
-    keyword_extraction_method = 'tfidf'
+    keyword_extraction_method: str = 'tfidf'
     """Keyword extraction method ('tfidf', 'yake', or 'rake')."""
