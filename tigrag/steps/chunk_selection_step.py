@@ -36,8 +36,8 @@ class ChunkSelectionStep(Step):
         per_doc_max: Optional[int] = None,  # e.g., max 3 chunks per document
         # Top-N control
         auto_topn: bool = True,
-        min_n: int = 40,
-        max_n: int = 256,
+        min_n: int = 10,
+        max_n: int = 25,
         top_n: int = 20,  # only used if auto_topn=False
         # Early stopping
         mmr_gain_window: int = 3,

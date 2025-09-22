@@ -26,6 +26,7 @@ class RetrieveContext:
     result: List[Dict[str, Any]] = field(default_factory=list)
     retrieval_context: str = field(default_factory=str)
     retrieval_answer: str = field(default_factory=str)
+    prediction_answer: str = field(default_factory=str)
     # Beliebige Metadaten:
     meta: Dict[str, Any] = field(default_factory=dict)
 

@@ -1,0 +1,16 @@
+Question: ${query}
+Question Background: 
+${retrieval_context}
+We have retrieved the following information for this question: retrieved articles
+Instructions:
+1. Provide at least 3 reasons why the answer might be no.
+{ Insert your thoughts }
+2. Provide at least 3 reasons why the answer might be yes.
+{ Insert your thoughts }
+3. Rate the strength of each of the reasons given in the last two responses. Think like a superforecaster (e.g.
+Nate Silver).
+{ Insert your rating of the strength of each reason }
+4. Aggregate your considerations.
+{ Insert your aggregated considerations }
+5. Output your answer (a number between 0 and 1) with an asterisk at the beginning and end of the decimal.
+{ Insert your answer }

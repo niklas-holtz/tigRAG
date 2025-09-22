@@ -14,6 +14,7 @@ from .steps.event_extractor_step import EventExtractorStep
 from .steps.event_relation_step import EventRelationStep
 from .steps.event_rating_step import EventRatingStep
 from .steps.answer_generation_step import AnswerGenerationStep
+from .steps.scratchpad_generation_step import ScratchpadGenerationStep
 
 
 class TemporalInfluenceGraph:
@@ -81,18 +82,20 @@ class TemporalInfluenceGraph:
         for step in pipeline:
             ctx = step.run(ctx)
 
-
-        print('####'*8)
-        print(ctx.retrieval_context)
-        print('####'*8)
-
-        print('ANSWER')
-        
-        print('####'*8)
-        print(ctx.retrieval_answer)
-        print('####'*8)
-
         return ctx.retrieval_answer
+
+    def predict(self, query: str):
+        ctx = RetrieveContext(
+            query=query,
+            chunk_storage=self.chunk_stor,
+            working_dir=self.query_param.working_dir,
+            llm_invoker=self.llm_func,
+            embedding_invoker=self.embedding_func,
+            llm_worker_nodes=self.query_param.llm_worker_nodes
+        )
+        step = ScratchpadGenerationStep()
+        step.run(ctx)
+        return ctx.prediction_answer
 
     def __del__(self):
         # Cleanly close DB connection when object is destroyed

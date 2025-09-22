@@ -403,12 +403,12 @@ def main():
     )
 
     # ---- Direct configuration (edit as needed) ----
-    input_dir: str = "tigrag/evaluation/answers"       # where <method>_<dataset>_answers.json live
-    output_dir: str = "tigrag/evaluation/judgments"     # where results JSON will be written
-    datasets: List[str] = ["cooking"] # ["cooking", "agriculture", "history"]
-    method_a: str = "lightrag"
+    input_dir: str = "working_dir/reduced_datasets/answers"       # where <method>_<dataset>_answers.json live
+    output_dir: str = "working_dir/reduced_datasets/judgements"     # where results JSON will be written
+    datasets: List[str] = ["cooking"] # ["cooking", "agriculture", "history"] # only name (there is not data loaded from this file)
+    method_a: str = "lightrag_naive"
     method_b: str = "tigrag"
-    workers: int = 1                                     # number of parallel threads
+    workers: int = 10                                     # number of parallel threads
     # ------------------------------------------------
 
     for ds in datasets:

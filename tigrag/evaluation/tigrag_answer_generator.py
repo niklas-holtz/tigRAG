@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 
 def process_queries(queries_file: str, output_json_path: str, tig):
     qfile = Path(queries_file)
-    queries = [line.strip() for line in qfile.read_text(encoding="utf-8").splitlines() if line.strip()][:10]
+    queries = [line.strip() for line in qfile.read_text(encoding="utf-8").splitlines() if line.strip()]
 
     outp = Path(output_json_path)
     if outp.is_dir() or outp.suffix.lower() != ".json":
