@@ -25,7 +25,7 @@ class ChunkClusteringStep(Step):
 
         clusters: List[List[Dict[str, Any]]] = self.cluster_chunks_kmeans(
             k_min=5,
-            k_max=60,
+            k_max=30,
             normalize=True,
             n_init=8,
             max_iter=300,

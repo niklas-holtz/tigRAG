@@ -18,18 +18,18 @@ from tigrag.dataset_provider.prophet_dataset_provider import ProphetDatasetProvi
 CONFIG = {
     "workers": 10,
     "workdir": "./working_dir/prophet/tig",
-    "llm_name": "claude3_7_bedrock",
+    "llm_name": "claude3_5_bedrock",
     "embed_name": "local",
     "keyword_method": "none",
 
     "datadir": "./working_dir/prophet/data",
-    "load_limit": 10,      # max rows to load from provider
+    "load_limit": 100,      # max rows to load from provider
     "start_idx": 0,       # inclusive
     "end_idx": None,      # exclusive; None = until end of df
     "reset_per_row": True,# True: new TIG per row; False: accumulate across rows
 
     "result_dir": "./working_dir/prophet/results",
-    "result_filename": "prophet_answers.json",
+    "result_filename": "prophet_answers_3_5.json",
 }
 
 
@@ -214,6 +214,55 @@ def main():
     else:
         logging.info("No valid Brier scores computed.")
 
+import numpy as np
+
+def calculate_brier_score(predictions, ground_truth):
+    """
+    Berechnet den Brier Score für binäre Klassifikationen.
+
+    Args:
+        predictions: Liste von Wahrscheinlichkeiten (zwischen 0 und 1)
+        ground_truth: Liste von tatsächlichen Werten (0 oder 1)
+
+    Returns:
+        Brier Score (niedrigere Werte sind besser)
+    """
+    return np.mean((np.array(predictions) - np.array(ground_truth)) ** 2)
+
+
+def test_me():
+    # Pfad zur JSON-Ergebnisdatei
+    result_path = os.path.join(CONFIG["result_dir"], CONFIG["result_filename"])
+
+    # JSON-Datei laden
+    try:
+        with open(result_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"Fehler beim Laden der JSON-Datei: {e}")
+        return
+
+    predictions = []
+    ground_truths = []
+
+    results = data.get("results", [])
+    for r in results:
+        m_score = r['model_score']
+        g_truth = r['ground_truth']
+        if not m_score or not g_truth: continue
+
+        # Werte zu den Listen hinzufügen
+        predictions.append(m_score)
+        ground_truths.append(g_truth)
+
+    # Brier Score berechnen
+    if predictions and ground_truths:
+        brier_score = calculate_brier_score(predictions, ground_truths)
+        print(f"Brier Score: {brier_score:.4f}")
+    else:
+        print("Keine gültigen Daten für die Berechnung des Brier Scores gefunden.")
+
 
 if __name__ == "__main__":
-    main()
+    #main()
+    test_me()
